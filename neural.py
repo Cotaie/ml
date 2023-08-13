@@ -6,8 +6,6 @@ def create_model(*args):
     if len(args) > 1:
       seed = args[1]
       np.random.seed(seed)
-    else:
-       np.random.seed()
     model = []
     no_layers_plus_input = np.shape(model_arch)[0]
     # create first model member (W matrix and activation function)
