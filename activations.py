@@ -9,7 +9,7 @@ def sigmoid(z):
 def relu(z):
     return max(0, z)
 
-func_map = {
+func_map_activations = {
     'linear': ident,
     'sigmoid': sigmoid,
     'relu': relu
