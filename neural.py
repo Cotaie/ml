@@ -1,7 +1,14 @@
 import numpy as np
+import warnings
 from constants import BIAS_INPUT
 from activations import ident, func_map_activations
 from loss import loss_quadratic, func_map_loss
+
+class _Utils:
+      def get_with_warning(dict, key, default, warning):
+          if key not in dict:
+             warnings.warn(warning)
+          return dict.get(key, default)           
 
 class Layer:
     def __init__(self, units, activation=None, name=None):
@@ -13,7 +20,7 @@ class Layer:
         return self._units
     
     def get_activation(self):
-        return func_map_activations.get('linear' if self._activation is None else self._activation, (lambda: ident)())
+        return _Utils.get_with_warning(func_map_activations, self._activation, ident, "activation function not found, linear is used")
     
     def get_name(self, layer_no):
         return self._name if self._name is not None else f"layer_{layer_no}"
@@ -41,34 +48,34 @@ class Model:
             self._optimizer = optimizer
             self._loss = loss
         def get_loss(self):
-            return func_map_loss.get('mse' if self._loss is None else self._loss, (lambda: loss_quadratic)())
+            return _Utils.get_with_warning(func_map_loss, self._loss, loss_quadratic, "loss function not found, mse is used")
 
     def _create_model(self, model_arch, seed):
         if seed is not None:
             np.random.seed(seed)
-        self.model = []
+        model = []
         no_layers_plus_input = len(model_arch)
         # create first model member (W matrix and activation function)
         first_layer_W = np.random.randn(model_arch[1].get_units(), model_arch[0] + BIAS_INPUT)
         first_layer_act_fct = model_arch[1].get_activation()
         first_layer_name = model_arch[1].get_name(1)
-        self.model.append(self._ModelLayer(first_layer_W, first_layer_act_fct, first_layer_name))
+        model.append(self._ModelLayer(first_layer_W, first_layer_act_fct, first_layer_name))
         # create remaining model members (W matrix and activation function)
         for cur_layer in range(2, no_layers_plus_input):
             cur_layer_W = np.random.randn(model_arch[cur_layer].get_units(), model_arch[cur_layer - 1].get_units() + BIAS_INPUT)
             cur_layer_act_fct = model_arch[cur_layer].get_activation()
             cur_layer_name = model_arch[cur_layer].get_name(cur_layer)
-            self.model.append(self._ModelLayer(cur_layer_W, cur_layer_act_fct, cur_layer_name))
-        return self.model
+            model.append(self._ModelLayer(cur_layer_W, cur_layer_act_fct, cur_layer_name))
+        return model
     
     def _feed_forward(self, input):
-        no_layers = len(self.model)
+        no_layers = len(self._model)
         bias_1 = np.array([BIAS_INPUT])
 
         output = input
         for cur_layer in range(no_layers):
             biased_input = np.concatenate((bias_1, output))
-            output = self.model[cur_layer].get_activation()(self.model[cur_layer].get_matrix_W() @ biased_input)
+            output = self._model[cur_layer].get_activation()(self._model[cur_layer].get_matrix_W() @ biased_input)
         return output
     
     def compile(self, optimizer=None, loss=None):
