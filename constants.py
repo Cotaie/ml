@@ -1,4 +1,1 @@
-NO_NEURONS = 0
-PAR_W = 0
-ACT_FCT = 1
 BIAS_INPUT = 1
