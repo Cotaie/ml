@@ -13,18 +13,25 @@ class _Utils:
           return dict.get(key, default)
 
 class _ModelLayer:
-    def __init__(self, matrix_W: np.ndarray, activation: Callable, activation_der: Callable, name: str):
-        self._matrix_W = matrix_W
+    def __init__(self, W: np.ndarray, activation: Callable, activation_der: Callable, name: str):
+        self._W = W
+        self._z = None
         self._activation = activation
         self._activation_der = activation_der
         self._name = name
 
-    def get_matrix_W(self) -> np.ndarray:
-        return self._matrix_W
+    def get_W(self) -> np.ndarray:
+        return self._W
     def get_activation(self) -> Callable:
         return self._activation
     def get_name(self) -> str:
         return self._name
+    def get_W_size(self):
+        return self._W.size
+    def get_z(self):
+        return self._z
+    def set_z(self, output):
+        self._z = output
 
 class _Compile:
     def __init__(self, optimizer: str | None = None, loss: str | None = None):

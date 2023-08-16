@@ -45,12 +45,14 @@ class Model:
     def _init_gradient(self):
         size = 0
         for layer in self._model:
-            size = size + layer._matrix_W.size
+            size = size + layer.get_W_size()
         return np.empty(size)
     def _feed_forward(self, input):
         output = input
         for layer in self._model:
-            output = layer.get_activation()(layer.get_matrix_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output)))
+            z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
+            layer.set_z(z)
+            output = layer.get_activation()(z)
         return output
     def fit(self, X, y):
         #loss_C0 = self._loss(self._feed_forward(X[0]), y[0])
