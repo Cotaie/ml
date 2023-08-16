@@ -7,14 +7,18 @@ from typing import Callable
 class Layer(_BasicLayer):
     def __init__(self, units: int, activation: Callable | None = None, name: str| None = None):
         super().__init__(units)
-        self._activation = activation
-        self._activation_der = self.get_activation_der()
+        self._activation = self._get_activation(activation)
+        self._activation_der = self._get_activation_der(activation)
         self._name = name
 
+    def _get_activation(self, activation):
+        return _Utils.get_with_warning(map_activations, activation, ident, ACTIVATION_NOT_FOUND)
+    def _get_activation_der(self, activation):
+        return _Utils.get(map_activations_der, activation, ident_der)
     def get_activation(self):
-        return _Utils.get_with_warning(map_activations, self._activation, ident, ACTIVATION_NOT_FOUND)
+        return self._activation
     def get_activation_der(self):
-        return _Utils.get(map_activations_der, self._activation, ident_der)
+        return self._activation_der
     def get_name(self, layer_no: int):
         return self._name if self._name is not None else f"layer_{layer_no}"
 
