@@ -31,8 +31,7 @@ class Model:
         self._loss_der = None
 
     def _create_model(self, model_arch, seed: int | None):
-        if seed is not None:
-            np.random.seed(seed)
+        np.random.seed(seed)
         model = []
         previous_layer = _BasicLayer(model_arch[0])
         for layer_index, layer in enumerate(model_arch[1:], start=1):
@@ -54,17 +53,18 @@ class Model:
             layer.set_z(z)
             output = layer.get_activation()(z)
         return output
-    def fit(self, X, y):
-        #loss_C0 = self._loss(self._feed_forward(X[0]), y[0])
+    def _compute_gradient(cost):
         pass
-    def _compute_gradient(self):
+    def _adjust_W(self):
         pass
     def compile(self, optimizer=None, loss=None):
         comp = _Compile(optimizer, loss)
         self._optimizer = optimizer
         self._loss = comp.get_loss()
         self._loss_der = comp.get_loss_der()
-    def train(self):
-        pass
+    def fit(self, X, y):
+        for index, x in enumerate(X):
+            self._compute_gradient(self._loss(self._feed_forward(x), y[index]))
+            self._adjust_W()
     def predict(self, input):
         return self._feed_forward(input)
