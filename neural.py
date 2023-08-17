@@ -46,13 +46,19 @@ class Model:
         for layer in self._model:
             size = size + layer.get_W_size()
         return np.empty(size)
-    def _feed_forward(self, input):
+    def _feed_forward(self, input, update_z: bool):
         output = input
-        for layer in self._model:
-            z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
-            layer.set_z(z)
-            output = layer.get_activation()(z)
-        return output
+        if update_z != False:
+            for layer in self._model:
+                z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
+                layer.set_z(z)
+                output = layer.get_activation()(z)
+            return output
+        else:
+            for layer in self._model:
+                z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
+                output = layer.get_activation()(z)
+            return output
     def _compute_gradient(cost):
         pass
     def _adjust_W(self):
@@ -64,7 +70,7 @@ class Model:
         self._loss_der = comp.get_loss_der()
     def fit(self, X, y):
         for index, x in enumerate(X):
-            self._compute_gradient(self._loss(self._feed_forward(x), y[index]))
+            self._compute_gradient(self._loss(self._feed_forward(x, True), y[index]))
             self._adjust_W()
     def predict(self, input):
-        return self._feed_forward(input)
+        return self._feed_forward(input, False)
