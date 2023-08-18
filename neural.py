@@ -25,7 +25,6 @@ class Layer(_BasicLayer):
 class Model:
     def __init__(self, model_arch: list, seed: int | None = None):
         self._model = self._create_model(model_arch, seed)
-        self._gradient = self._init_gradient()
         self._optimizer = None
         self._loss = None
         self._loss_der = None
@@ -41,11 +40,6 @@ class Model:
                                      layer.get_name(layer_index)))
             previous_layer = layer
         return model
-    def _init_gradient(self):
-        size = 0
-        for layer in self._model:
-            size = size + layer.get_W_size()
-        return np.empty(size)
     def _feed_forward(self, input, update_z: bool):
         output = input
         if update_z != False:
@@ -59,6 +53,11 @@ class Model:
                 z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
                 output = layer.get_activation()(z)
             return output
+    def _comp_loss_der_arr(self, output, y_i):
+        loss_der_arr = []
+        for j, out in enumerate(output):
+            loss_der_arr.append(self._loss_der(out, y_i[j]))
+        return loss_der_arr
     def _compute_gradient(cost):
         pass
     def _adjust_W(self):
@@ -68,9 +67,12 @@ class Model:
         self._optimizer = optimizer
         self._loss = comp.get_loss()
         self._loss_der = comp.get_loss_der()
-    def fit(self, X, y):
+    def fit(self, X, Y):
         for index, x in enumerate(X):
-            self._compute_gradient(self._loss(self._feed_forward(x, True), y[index]))
+            self._comp_loss_der_arr(self._feed_forward(x, True), Y[index])
+            #print(f"loss der arr{index}",C_x)
+            # no_layers = len(self._model)
+            # for no_curr_layer in range(len(self._model)):
             self._adjust_W()
     def predict(self, input):
         return self._feed_forward(input, False)
