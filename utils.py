@@ -15,7 +15,7 @@ class _Utils:
 class _ModelLayer:
     def __init__(self, W: np.ndarray, activation: Callable, activation_der: Callable, name: str):
         self._W = W
-        self._der_W = np.ones(np.shape(self._W))
+        self._der_W = []
         self._z = None
         self._activation = activation
         self._activation_der = activation_der

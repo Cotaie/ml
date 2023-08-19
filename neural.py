@@ -58,8 +58,8 @@ class Model:
         for j, out in enumerate(output):
             loss_der_arr.append(self._loss_der(out, y_i[j]))
         return loss_der_arr
-    def _compute_gradient(output, hidden_layer):
-        pass
+    def _compute_gradient(out, prev_activation, prev_z):
+            return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
     def _adjust_W(self):
         pass
     def compile(self, optimizer=None, loss=None):
@@ -69,24 +69,17 @@ class Model:
         self._loss_der = comp.get_loss_der()
     def fit(self, X, Y):
         for index, x in enumerate(X):
-            C_x = self._comp_loss_der_arr(self._feed_forward(x, True), Y[index])
-            #print(f"loss der arr{index}",C_x)
-            output = C_x
-            no_layers = len(self._model)
+            loss_der = self._comp_loss_der_arr(self._feed_forward(x, True), Y[index])
+            output = loss_der
             prev_layer = self._model[-2]
-            #print("Prev_layer:", prev_layer._z)
-            for curr in range(no_layers-1, 0, -1):
-                self._model[curr]._der_W = output * prev_layer._activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_layer._z)))
-                print(f"index: {curr}:",self._model[curr]._der_W)
-                #output = self._model[curr]._der_W
-                prev_layer = self._model[curr]
-            #print("test", self._model[1]._der_W)
-            #hidden_layer._der_W = output * prev_layer._activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_layer._z)))
-            #print("derr, ",prev_layer._der_W)
-            #print("teeest", self._model[0]._der_W)
-            print("teat", output)
-            for row in self._model[0]._der_W:
-                row[:] = output * np.concatenate((BIAS_INPUT_NDARRAY, x))
-                #print("row: ",row)
+            layers = self._model
+            for curr, layer in reversed(list(enumerate(layers[1:]))):
+                layer._der_W.clear()
+                for out in output:       
+                    layer._der_W.append(Model._compute_gradient(out, prev_layer._activation, [1] + prev_layer._z))
+                print(f"index layer {curr}",layer._der_W)
+                prev_layer = layer
+            first_layer = self._model[0]
+            first_layer._der_W.append(Model._compute_gradient(out, ident, [1] + x))
     def predict(self, input):
         return self._feed_forward(input, False)
