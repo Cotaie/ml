@@ -53,12 +53,12 @@ class Model:
                 z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
                 output = layer.get_activation()(z)
             return output
-    def _comp_loss_der_arr(self, output, y_i):
+    def _comp_loss_der_arr(self,y_pred, y_real):
         loss_der_arr = []
-        for j, out in enumerate(output):
-            loss_der_arr.append(self._loss_der(out, y_i[j]))
+        for y_i_pred, y_i_real in zip(y_pred, y_real):
+            loss_der_arr.append(self._loss_der(y_i_pred, y_i_real))
         return loss_der_arr
-    def _compute_gradient(out, prev_activation, prev_z):
+    def _compute_neuron_W_der(out, prev_activation, prev_z):
             return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
     def _adjust_W(self):
         pass
@@ -68,18 +68,19 @@ class Model:
         self._loss = comp.get_loss()
         self._loss_der = comp.get_loss_der()
     def fit(self, X, Y):
-        for index, x in enumerate(X):
-            loss_der = self._comp_loss_der_arr(self._feed_forward(x, True), Y[index])
-            output = loss_der
+        for x, y in zip(X, Y):
+            output = self._comp_loss_der_arr(self._feed_forward(x, True), y)
             prev_layer = self._model[-2]
             layers = self._model
-            for curr, layer in reversed(list(enumerate(layers[1:]))):
+            for layer in reversed((layers[1:])):
                 layer._der_W.clear()
-                for out in output:       
-                    layer._der_W.append(Model._compute_gradient(out, prev_layer._activation, [1] + prev_layer._z))
-                print(f"index layer {curr}",layer._der_W)
+                for out in output:
+                    layer._der_W.append(Model._compute_neuron_W_der(out, prev_layer._activation, prev_layer._z))
                 prev_layer = layer
+                output = (output @ layer._W)[1:]
             first_layer = self._model[0]
-            first_layer._der_W.append(Model._compute_gradient(out, ident, [1] + x))
+            first_layer._der_W.clear()
+            for out in output:
+                first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
     def predict(self, input):
         return self._feed_forward(input, False)
