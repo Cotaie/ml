@@ -40,6 +40,9 @@ class Model:
                                      layer.get_name(layer_index)))
             previous_layer = layer
         return model
+    def _set_W_1(self):
+        for layer in self._model:
+            layer._W[:] = 1
     def _feed_forward(self, input, update_z: bool):
         output = input
         if update_z != False:
@@ -59,7 +62,7 @@ class Model:
             loss_der_arr.append(self._loss_der(y_i_pred, y_i_real))
         return loss_der_arr
     def _compute_neuron_W_der(out, prev_activation, prev_z):
-            return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
+        return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
     def _adjust_W(self):
         pass
     def compile(self, optimizer=None, loss=None):
