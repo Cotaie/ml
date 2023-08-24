@@ -5,7 +5,7 @@ from utils import _Utils, _ModelLayer, _Compile, _BasicLayer
 from typing import Callable
 
 class Layer(_BasicLayer):
-    def __init__(self, units: int, activation: Callable | None = None, name: str| None = None):
+    def __init__(self, units: int, activation: Callable | None = None, name: str | None = None):
         super().__init__(units)
         self._activation = self._get_activation(activation)
         self._activation_der = self._get_activation_der(activation)
@@ -73,14 +73,17 @@ class Model:
     def fit(self, X, Y):
         for x, y in zip(X, Y):
             output = self._comp_loss_der_arr(self._feed_forward(x, True), y)
-            prev_layer = self._model[-2]
+            print("prop_error: ", output)
+            #prev_layer = self._model[-2]
             layers = self._model
-            for layer in reversed((layers[1:])):
+            i = 0
+            for prev_layer, layer in zip(layers[-2::-1], (layers[::-1][:-1])):
                 layer._der_W.clear()
                 for out in output:
                     layer._der_W.append(Model._compute_neuron_W_der(out, prev_layer._activation, prev_layer._z))
-                prev_layer = layer
+                print("prev_layer: ", prev_layer._z)
                 output = (output @ layer._W)[1:]
+                print("prop_error: ", output)
             first_layer = self._model[0]
             first_layer._der_W.clear()
             for out in output:
