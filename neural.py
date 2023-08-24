@@ -28,16 +28,14 @@ class Model:
         self._optimizer = None
         self._loss = None
         self._loss_der = None
+        self._learning_rate = 0.01
 
     def _create_model(self, model_arch, seed: int | None):
         np.random.seed(seed)
         model = []
         previous_layer = _BasicLayer(model_arch[0])
         for layer_index, layer in enumerate(model_arch[1:], start=1):
-            model.append(_ModelLayer(np.random.randn(layer.get_units(), previous_layer.get_units() + BIAS_INPUT),
-                                     layer.get_activation(),
-                                     layer.get_activation_der(),
-                                     layer.get_name(layer_index)))
+            model.append(_ModelLayer(np.random.randn(layer.get_units(), previous_layer.get_units() + BIAS_INPUT), layer.get_activation(), layer.get_activation_der(), layer.get_name(layer_index)))
             previous_layer = layer
         return model
     def _set_W_1(self):
@@ -64,7 +62,10 @@ class Model:
     def _compute_neuron_W_der(out, prev_activation, prev_z):
         return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
     def _adjust_W(self):
-        pass
+        for layer in self._model:
+            for row_w, row_der_w in zip(layer._W, layer._der_W):
+                print(row_w, row_der_w)
+                row_w[:] = [w - self._learning_rate * der_w for w, der_w in zip(row_w, row_der_w)]
     def compile(self, optimizer=None, loss=None):
         comp = _Compile(optimizer, loss)
         self._optimizer = optimizer
@@ -83,5 +84,6 @@ class Model:
             first_layer._der_W.clear()
             for out in output:
                 first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
+            self._adjust_W()
     def predict(self, input):
         return self._feed_forward(input, False)
