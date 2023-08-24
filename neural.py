@@ -73,18 +73,13 @@ class Model:
     def fit(self, X, Y):
         for x, y in zip(X, Y):
             output = self._comp_loss_der_arr(self._feed_forward(x, True), y)
-            print("prop_error: ", output)
-            #prev_layer = self._model[-2]
             layers = self._model
-            i = 0
-            for prev_layer, layer in zip(layers[-2::-1], (layers[::-1][:-1])):
-                layer._der_W.clear()
+            for i in range(len(layers)-1, 0, -1):
+                layers[i]._der_W.clear()
                 for out in output:
-                    layer._der_W.append(Model._compute_neuron_W_der(out, prev_layer._activation, prev_layer._z))
-                print("prev_layer: ", prev_layer._z)
-                output = (output @ layer._W)[1:]
-                print("prop_error: ", output)
-            first_layer = self._model[0]
+                    layers[i]._der_W.append(Model._compute_neuron_W_der(out, layers[i-1]._activation, layers[i-1]._z))
+                output = (output @ layers[i]._W)[1:]
+            first_layer = layers[0]
             first_layer._der_W.clear()
             for out in output:
                 first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
