@@ -8,7 +8,7 @@ def sigmoid(z: float) -> float:
     return 1.0 / (1.0 + np.exp(-z))
 
 def relu(z: float):
-    return max(0.0, z)
+    return np.maximum(0.0, z)
 
 map_activations: dict[str, Callable] = {
     'linear': ident,

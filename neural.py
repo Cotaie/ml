@@ -64,26 +64,26 @@ class Model:
     def _adjust_W(self):
         for layer in self._model:
             for row_w, row_der_w in zip(layer._W, layer._der_W):
-                print(row_w, row_der_w)
                 row_w[:] = [w - self._learning_rate * der_w for w, der_w in zip(row_w, row_der_w)]
+    def _compute_gradients(self, output, x):
+        for i in range(len(self._model)-1, 0, -1):
+            self._model[i]._der_W.clear()
+            for out in output:
+                self._model[i]._der_W.append(Model._compute_neuron_W_der(out, self._model[i-1]._activation, self._model[i-1]._z))
+            output = (output @ self._model[i]._W)[1:]
+        first_layer = self._model[0]
+        first_layer._der_W.clear()
+        for out in output:
+            first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
     def compile(self, optimizer=None, loss=None):
         comp = _Compile(optimizer, loss)
         self._optimizer = optimizer
         self._loss = comp.get_loss()
         self._loss_der = comp.get_loss_der()
-    def fit(self, X, Y):
-        for x, y in zip(X, Y):
-            output = self._comp_loss_der_arr(self._feed_forward(x, True), y)
-            layers = self._model
-            for i in range(len(layers)-1, 0, -1):
-                layers[i]._der_W.clear()
-                for out in output:
-                    layers[i]._der_W.append(Model._compute_neuron_W_der(out, layers[i-1]._activation, layers[i-1]._z))
-                output = (output @ layers[i]._W)[1:]
-            first_layer = layers[0]
-            first_layer._der_W.clear()
-            for out in output:
-                first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
-            self._adjust_W()
+    def fit(self, X, Y, epochs=1):
+        for _ in range(epochs):
+            for x, y in zip(X, Y):
+                self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x, True), y), x)
+                self._adjust_W()
     def predict(self, input):
         return self._feed_forward(input, False)
