@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from neural import Layer, Model
 
-data = pd.read_csv('data_fin_2.csv')
+data = pd.read_csv('data_fin_3.csv')
 
 x1_values = data['X'].values
 x2_values = data['Y'].values
@@ -20,12 +20,22 @@ mod_arch = [2, Layer(3, activation="sigmoid"), Layer(1, activation="sigmoid")]
 
 mod = Model(mod_arch)
 mod.compile(loss='binary_crossentropy')
+#mod.compile(loss='mse')
 #mod._set_W_1()
 #print(mod.predict(np.array([2, 10])))
 
-mod.fit(X, Y, 10)
-for x, y in zip(X,Y):
-    print("predict: ", mod.predict(x), "should be: ", y)
+mean = np.mean(X, axis=0)
+std = np.std(X, axis=0)
+normalized_X = (X - mean) / std
+
+print("mean: ", mean)
+print("std: ", std)
+
+mod.fit(normalized_X, Y, epochs=2)
+# for x, y in zip(X,Y):
+#     print("predict: ", mod.predict(x), "should be: ", y)
+norm_input = (np.array([4, 2.5]) - mean) / std
+print(mod.predict(norm_input))
 
 plt.scatter(x1_values[label == 0], x2_values[label == 0], label='Class 0', alpha=0.5)
 plt.scatter(x1_values[label == 1], x2_values[label == 1], label='Class 1', alpha=0.5)

@@ -30,6 +30,7 @@ class Model:
         self._loss_der = None
         self._learning_rate = 0.01
         self._reg = 0
+        self._reg_fact = 1
 
     def _create_model(self, model_arch, seed: int | None):
         np.random.seed(seed)
@@ -58,7 +59,7 @@ class Model:
     def _comp_loss_der_arr(self,y_pred, y_real):
         loss_der_arr = []
         for y_i_pred, y_i_real in zip(y_pred, y_real):
-            loss_der_arr.append(self._loss_der(y_i_pred, y_i_real) + 2 * 0.01 * self._reg)
+            loss_der_arr.append(self._loss_der(y_i_pred, y_i_real) + 2 * self._reg_fact * self._reg)
         return loss_der_arr
     def _compute_neuron_W_der(out, prev_activation, prev_z):
         return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
@@ -68,7 +69,6 @@ class Model:
             for row_w, row_der_w in zip(layer._W, layer._der_W):
                 row_w[:] = [w - self._learning_rate * der_w for w, der_w in zip(row_w, row_der_w)]
                 self._reg += sum(row_w)
-        print(self._reg)
     def _compute_gradients(self, output, x):
         for i in range(len(self._model)-1, 0, -1):
             self._model[i]._der_W.clear()
