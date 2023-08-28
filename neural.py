@@ -74,7 +74,7 @@ class Model:
             self._model[i]._der_W.clear()
             for out in output:
                 self._model[i]._der_W.append(Model._compute_neuron_W_der(out, self._model[i-1]._activation, self._model[i-1]._z))
-            output = (output @ self._model[i]._W)[1:]
+            output = output @ self._model[i]._W[:,1:]
         first_layer = self._model[0]
         first_layer._der_W.clear()
         for out in output:
