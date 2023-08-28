@@ -24,7 +24,7 @@ class _ModelLayer:
         self._name = name
 
     def _init_W(self) -> np.array:
-        return np.random.randn(self.no_neurons, self.no_inputs + 1)
+        return np.hstack((np.zeros((self.no_neurons, 1)),np.random.randn(self.no_neurons, self.no_inputs)))
     def get_W(self) -> np.ndarray:
         return self._W
     def get_activation(self) -> Callable:
