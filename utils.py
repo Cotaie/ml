@@ -13,14 +13,18 @@ class _Utils:
           return dict.get(key, default)
 
 class _ModelLayer:
-    def __init__(self, W: np.ndarray, activation: Callable, activation_der: Callable, name: str):
-        self._W = W
+    def __init__(self, no_inputs, no_neurons, activation: Callable, activation_der: Callable, name: str):
+        self.no_inputs = no_inputs
+        self.no_neurons = no_neurons
         self._der_W = []
         self._z = None
         self._activation = activation
         self._activation_der = activation_der
+        self._W = self._init_W()
         self._name = name
 
+    def _init_W(self) -> np.array:
+        return np.random.randn(self.no_neurons, self.no_inputs + 1)
     def get_W(self) -> np.ndarray:
         return self._W
     def get_activation(self) -> Callable:

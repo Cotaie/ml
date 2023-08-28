@@ -37,7 +37,7 @@ class Model:
         model = []
         previous_layer = _BasicLayer(model_arch[0])
         for layer_index, layer in enumerate(model_arch[1:], start=1):
-            model.append(_ModelLayer(np.random.randn(layer.get_units(), previous_layer.get_units() + BIAS_INPUT), layer.get_activation(), layer.get_activation_der(), layer.get_name(layer_index)))
+            model.append(_ModelLayer(previous_layer.get_units(), layer.get_units(), layer.get_activation(), layer.get_activation_der(), layer.get_name(layer_index)))
             previous_layer = layer
         return model
     def _set_W_1(self):
