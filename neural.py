@@ -37,14 +37,14 @@ class Model:
         output = input
         if update_z != False:
             for layer in self._model:
-                z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
-                layer.set_z(z)
-                output = layer.get_activation()(z)
+                z = layer.W @ np.concatenate((BIAS_INPUT_NDARRAY, output))
+                layer.z = z
+                output = layer.activation(z)
             return output
         else:
             for layer in self._model:
-                z = layer.get_W() @ np.concatenate((BIAS_INPUT_NDARRAY, output))
-                output = layer.get_activation()(z)
+                z = layer.W @ np.concatenate((BIAS_INPUT_NDARRAY, output))
+                output = layer.activation(z)
             return output
     def _comp_loss_der_arr(self,y_pred, y_real):
         loss_der_arr = []
@@ -56,19 +56,19 @@ class Model:
     def _adjust_W(self):
         self._reg = 0
         for layer in self._model:
-            for row_w, row_der_w in zip(layer._W, layer._der_W):
+            for row_w, row_der_w in zip(layer.W, layer.der_W):
                 row_w[:] = [w - self._learning_rate * der_w for w, der_w in zip(row_w, row_der_w)]
                 self._reg += sum(row_w)
     def _compute_gradients(self, output, x):
         for i in range(len(self._model)-1, 0, -1):
-            self._model[i]._der_W.clear()
+            self._model[i].der_W.clear()
             for out in output:
-                self._model[i]._der_W.append(Model._compute_neuron_W_der(out, self._model[i-1]._activation, self._model[i-1]._z))
-            output = output @ self._model[i]._W[:,1:]
+                self._model[i].der_W.append(Model._compute_neuron_W_der(out, self._model[i-1].activation, self._model[i-1].z))
+            output = output @ self._model[i].W[:,1:]
         first_layer = self._model[0]
-        first_layer._der_W.clear()
+        first_layer.der_W.clear()
         for out in output:
-            first_layer._der_W.append(Model._compute_neuron_W_der(out, ident, x))
+            first_layer.der_W.append(Model._compute_neuron_W_der(out, ident, x))
     def compile(self, optimizer=None, loss=None):
         comp = Compile(optimizer, loss)
         self._optimizer = optimizer
