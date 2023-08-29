@@ -25,8 +25,8 @@ def loss_quadratic_der(g, y_i):
 def loss_absolute_der(g, y_i):
     return np.where(g > y_i, 1, np.where(g < y_i, -1, 0))
 
-def loss_log_der(g, y_i):
-    return -y_i / g + (1 - y_i) / (1 - g)
+def loss_log_der(g, y_i, eps=EPS):
+    return -y_i / (g + eps) + (1 - y_i) / (1 - g + eps)
 
 map_loss_der: dict[str, Callable] = {
     'mean_squared_error': loss_quadratic_der,

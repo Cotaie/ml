@@ -49,7 +49,7 @@ class Model:
     def _comp_loss_der_arr(self,y_pred, y_real):
         loss_der_arr = []
         for y_i_pred, y_i_real in zip(y_pred, y_real):
-            loss_der_arr.append(self._loss_der(y_i_pred, y_i_real) + 2 * self._reg_fact * self._reg)
+            loss_der_arr.append(self._loss_der(y_i_pred, y_i_real))
         return loss_der_arr
     def _compute_neuron_W_der(out, prev_activation, prev_z):
         return out * prev_activation(np.concatenate((BIAS_INPUT_NDARRAY, prev_z)))
