@@ -1,8 +1,6 @@
-import numpy as np
 import unittest
+import numpy as np
 from neural import Layer, Model
-from activations import ident, sigmoid, ident_der, sigmoid_der
-
 
 class TestModel(unittest.TestCase):
     def test_fit(self):
