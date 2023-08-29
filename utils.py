@@ -54,5 +54,7 @@ class Compile:
 class BasicLayer:
     def __init__(self, units: int):
         self._units = units
-    def get_units(self):
+
+    @property
+    def units(self):
         return self._units

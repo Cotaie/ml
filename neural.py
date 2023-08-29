@@ -9,9 +9,10 @@ class Layer(BasicLayer):
         self._activation = activation
         self._name = name
 
-    def get_activation(self):
+    @property
+    def activation(self):
         return self._activation
-    def get_name(self, layer_no: int):
+    def get_name_or_default(self, layer_no: int):
         return self._name if self._name is not None else f"layer_{layer_no}"
 
 class Model:
@@ -29,7 +30,7 @@ class Model:
         model = []
         previous_layer = BasicLayer(model_arch[0])
         for layer_index, layer in enumerate(model_arch[1:], start=1):
-            model.append(ModelLayer(previous_layer.get_units(), layer.get_units(), layer.get_activation(), layer.get_name(layer_index)))
+            model.append(ModelLayer(previous_layer.units, layer.units, layer.activation, layer.get_name_or_default(layer_index)))
             previous_layer = layer
         return model
     def _feed_forward(self, input, update_z: bool):

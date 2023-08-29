@@ -7,17 +7,17 @@ class TestLayer(unittest.TestCase):
         self.assertEqual(layer._units, 3)
         self.assertEqual(layer._activation, None)
         self.assertEqual(layer._name, None)
-        self.assertEqual(layer.get_units(), 3)
-        self.assertEqual(layer.get_activation(), None)
-        self.assertEqual(layer.get_name(7), "layer_7")
+        self.assertEqual(layer.units, 3)
+        self.assertEqual(layer.activation, None)
+        self.assertEqual(layer.get_name_or_default(7), "layer_7")
     def test_Layer_all_parameters(self):
         layer = Layer(4, activation='sigmoid', name='hidden layer')
         self.assertEqual(layer._units, 4)
         self.assertEqual(layer._activation, 'sigmoid')
         self.assertEqual(layer._name, "hidden layer")
-        self.assertEqual(layer.get_units(), 4)
-        self.assertEqual(layer.get_activation(), 'sigmoid')
-        self.assertEqual(layer.get_name(7), "hidden layer")
+        self.assertEqual(layer.units, 4)
+        self.assertEqual(layer.activation, 'sigmoid')
+        self.assertEqual(layer.get_name_or_default(7), "hidden layer")
 
 if __name__ == '__main__':
     unittest.main()
