@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Number of data points
-N = 1000
+N = 100000
 
 # Generate random data points
 x = np.random.rand(N) * 10  # Random x values between 0 and 10
@@ -19,13 +19,13 @@ labels = np.where(
 
 # Convert data to a pandas DataFrame for saving
 df = pd.DataFrame({
-    'X': x,
-    'Y': y,
-    'Label': labels
+    'x1': x,
+    'x2': y,
+    'y': labels
 })
 
 # Save to CSV
-df.to_csv('data.csv', index=False)
+df.to_csv('data_test.csv', index=False)
 
 # Plotting
 plt.scatter(x[labels == 0], y[labels == 0], label='Class 0', alpha=0.5)

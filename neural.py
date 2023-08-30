@@ -80,4 +80,7 @@ class Model:
                 self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x, True), y), x)
                 self._adjust_W()
     def predict(self, input):
-        return self._feed_forward(input, False)
+        if self._feed_forward(input, False)[0] < 0.5:
+            return 0.
+        else:
+            return 1.

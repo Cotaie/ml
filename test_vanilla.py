@@ -3,11 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from neural import Layer, Model
 
-data = pd.read_csv('data_bin.csv')
+data = pd.read_csv('data_bin_m1_10.csv')
 
-x1_values = data['X'].values
-x2_values = data['Y'].values
-label = data['Label'].values
+x1_values = data['x1'].values
+x2_values = data['x2'].values
+label = data['y'].values
 X = [list(item) for item in zip(x1_values, x2_values)]
 Y = [[item] for item in label]
 
@@ -34,14 +34,21 @@ normalized_X = (X - mean) / std
 mod.fit(normalized_X, Y, epochs=10)
 # for x, y in zip(X,Y):
 #     print("predict: ", mod.predict(x), "should be: ", y)
-norm_input = (np.array([6.050493541021657,0.9663189290801799]) - mean) / std
-print(mod.predict(norm_input))
+norm_input = (np.array([2.357656480203747, 7.656358634495418]) - mean) / std
+print("ssssss", mod._feed_forward(norm_input, False))
+norm_input = (np.array([9.40930497537318, 0.5905728514607234]) - mean) / std
+print("ssssss", mod._feed_forward(norm_input, False))
+norm_input = (np.array([1.279576122435745, 8.746143873472004]) - mean) / std
+print("ssssss", mod._feed_forward(norm_input, False))
 
 
 
 plt.scatter(x1_values[label == 0], x2_values[label == 0], label='Class 0', alpha=0.5)
 plt.scatter(x1_values[label == 1], x2_values[label == 1], label='Class 1', alpha=0.5)
 plt.plot([0, 10], [b1, 10 * m1 + b1], '-r')
+plt.scatter(2.357656480203747, 7.656358634495418, color="black")
+plt.scatter(9.40930497537318, 0.5905728514607234, color="black")
+plt.scatter(1.279576122435745, 8.746143873472004, color="black")
 # plt.plot([0, 10], [b2, 10 * m2 + b2], '-g')
 # plt.plot([0, 10], [b3, 10 * m3 + b3], '-b')
 plt.legend()
