@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from neural import Layer, Model
+from initializers import Initializers
 
 data = pd.read_csv('data_bin_m1_10.csv')
 
@@ -17,8 +18,8 @@ m1, b1 = -1, 10   # First line
 # m3, b3 = 1, 0   # Third line
 
 #mod_arch = [2, Layer(3, activation="sigmoid"), Layer(1, activation="sigmoid")]
-mod_arch = [2, Layer(1, activation="sigmoid")]
-mod = Model(mod_arch)
+mod_arch = [2, Layer(1, activation="sigmoid", kernel_initializer=Initializers.xavier_normal)]
+mod = Model(mod_arch, 42)
 mod.compile(loss='binary_crossentropy')
 #mod.compile(loss='mse')
 #mod._set_W_1()

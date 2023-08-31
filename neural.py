@@ -2,16 +2,21 @@ import numpy as np
 from constants import BIAS_INPUT_NDARRAY
 from activations import ident
 from utils import ModelLayer, Compile, BasicLayer
+from typing import Callable
 
 class Layer(BasicLayer):
-    def __init__(self, units: int, activation: str | None = None, name: str | None = None):
+    def __init__(self, units: int, activation: str | None = None, kernel_initializer: Callable | None = None, name: str | None = None):
         super().__init__(units)
         self._activation = activation
+        self._kernel_initializer = kernel_initializer
         self._name = name
 
     @property
     def activation(self):
         return self._activation
+    @property
+    def kernel_initializer(self):
+        return self._kernel_initializer
     def get_name_or_default(self, layer_no: int):
         return self._name if self._name is not None else f"layer_{layer_no}"
 
@@ -30,7 +35,7 @@ class Model:
         model = []
         previous_layer = BasicLayer(model_arch[0])
         for layer_index, layer in enumerate(model_arch[1:], start=1):
-            model.append(ModelLayer(previous_layer.units, layer.units, layer.activation, layer.get_name_or_default(layer_index)))
+            model.append(ModelLayer(previous_layer.units, layer.units, layer.activation, layer.kernel_initializer, layer.get_name_or_default(layer_index)))
             previous_layer = layer
         return model
     def _feed_forward(self, input, update_z: bool):

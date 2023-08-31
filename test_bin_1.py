@@ -25,7 +25,7 @@ class TestModel(unittest.TestCase):
             if mod.predict((np.array(x) - mean) / std) != data.iloc[index]['y']:
                 no_fails = no_fails+1
                 fail.append(x)
-                print(f"fail: {x}, ", f"csv: {data.iloc[index]['y']}", f"predicted {mod.predict(x)}")
+                print(f"fail: {x}, ", f"csv: {data.iloc[index]['y']}", f"predicted {mod.predict((np.array(x) - mean) / std)}")
         print("No of fails: ", no_fails)
         print("fails: ", fail)
         print("No of inputs: ", len(X))

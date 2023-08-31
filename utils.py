@@ -4,6 +4,8 @@ from constants import MEAN, VARIANCE, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
 from loss import loss_quadratic, loss_quadratic_der, map_loss, map_loss_der
 from typing import Callable
 from activations import ident, ident_der, map_activations, map_activations_der
+from initializers import Initializers, map_activations_initializers
+
 
 class _Utils:
       def get_with_warning(dict: dict, key: str, default: Callable, warning: str):
@@ -14,14 +16,19 @@ class _Utils:
           return dict.get(key, default)
 
 class ModelLayer:
-    def __init__(self, no_inputs: int, no_neurons: int, activation: str | None, name: str | None):
-        self._W = np.hstack((np.zeros((no_neurons, 1)),np.random.normal(MEAN, VARIANCE, (no_neurons, no_inputs))))
-        self._der_W = []
-        self._z = None
+    def __init__(self, no_inputs: int, no_neurons: int, activation: str | None, kernel_initializer: Callable | None, name: str | None):
         self._activation = _Utils.get_with_warning(map_activations, activation, ident, ACTIVATION_NOT_FOUND)
         self._activation_der = _Utils.get(map_activations_der, activation, ident_der)
+        self._W = self._init_kernel(no_inputs, no_neurons, kernel_initializer)
+        self._der_W = []
+        self._z = None
         self._name = name
 
+    def _init_kernel(self,no_inputs, no_neurons, kernel_initializer):
+        if kernel_initializer is None:
+            return _Utils.get(map_activations_initializers, self._activation, Initializers.random_normal)(no_inputs, no_neurons)
+        else:
+            return kernel_initializer(no_inputs, no_neurons)
     @property
     def W(self) -> np.ndarray:
         return self._W
