@@ -9,7 +9,7 @@ class Activation:
         return 1.0 / (1.0 + np.exp(-np.clip(z, -SIGMOID_CLIPPING, SIGMOID_CLIPPING)))
     def relu(z: float):
         return np.maximum(0.0, z)
-    def leaky_relu(z: float, alpha=LEAKINESS_FACTOR):
+    def leaky_relu(z: float, alpha = LEAKINESS_FACTOR):
         return np.where(z > 0, z, alpha * z)
 
 class ActivationDerivative:
@@ -20,5 +20,5 @@ class ActivationDerivative:
         return sigmoid_value * (1.0 - sigmoid_value)
     def relu(z: float):
         np.where(z > 0, 1, 0)
-    def leaky_relu(z: float, alpha=LEAKINESS_FACTOR):
+    def leaky_relu(z: float, alpha = LEAKINESS_FACTOR):
         return np.where(z > 0, 1, alpha)

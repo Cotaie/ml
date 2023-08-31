@@ -1,8 +1,10 @@
 import numpy as np
 from typing import Callable
-from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT
+from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT, LOSS_NOT_FOUND, LOSS_POS, LOSS_DER_POS
 from activations import Activation
-from utils import ModelLayer, Compile, BasicLayer
+from loss import Loss, LossDerivative
+from normalization import Normalization
+from utils import _Utils, ModelLayer, BasicLayer, map_loss
 
 
 class Layer(BasicLayer):
@@ -27,6 +29,7 @@ class Model:
         self._optimizer = None
         self._loss = None
         self._loss_der = None
+        self._norm_fct = None
         self._learning_rate = 0.01
         self._reg = 0
         self._reg_fact = 1
@@ -75,18 +78,20 @@ class Model:
         first_layer.der_W.clear()
         for out in output:
             first_layer.der_W.append(Model._compute_neuron_W_der(out, Activation.ident, x))
-    def compile(self, optimizer=None, loss=None):
-        comp = Compile(optimizer, loss)
+    def compile(self, optimizer=None, loss=None, input_normalization=None):
         self._optimizer = optimizer
-        self._loss = comp.get_loss()
-        self._loss_der = comp.get_loss_der()
+        self._loss = _Utils.get_with_warning(map_loss, loss, (Loss.quadratic, None), LOSS_NOT_FOUND)[LOSS_POS]
+        self._loss_der = _Utils.get(map_loss, loss, (None, LossDerivative.quadratic))[LOSS_DER_POS]
+        self._input_normalization = Normalization.no_normalization if input_normalization is None else input_normalization
     def fit(self, X, Y, epochs=1):
+        self._norm_fct = self._input_normalization(X)
         for _ in range(epochs):
             for x, y in zip(X, Y):
-                self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x, True), y), x)
+                x_normed = self._norm_fct(x)
+                self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y), x_normed)
                 self._adjust_W()
     def predict(self, input):
-        if self._feed_forward(input, False)[0] < SIGMOID_MIDPOINT:
+        if self._feed_forward(self._norm_fct(input), False)[0] < SIGMOID_MIDPOINT:
             return 0.
         else:
             return 1.

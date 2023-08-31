@@ -32,7 +32,7 @@ normalized_X = (X - mean) / std
 # print("mean: ", mean)
 # print("std: ", std)
 
-mod.fit(normalized_X, Y, epochs=10)
+mod.fit(normalized_X, Y, epochs=100)
 # for x, y in zip(X,Y):
 #     print("predict: ", mod.predict(x), "should be: ", y)
 norm_input = (np.array([2.357656480203747, 7.656358634495418]) - mean) / std

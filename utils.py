@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 from typing import Callable
-from constants import ACTIVATION_POS, ACTIVATION_DER_POS, WEIGHTS_INIT_POS, LOSS_POS, LOSS_DER_POS, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
+from constants import ACTIVATION_POS, ACTIVATION_DER_POS, WEIGHTS_INIT_POS, ACTIVATION_NOT_FOUND
 from loss import Loss, LossDerivative
 from activations import Activation, ActivationDerivative
 from initializers import Initializers
@@ -65,16 +65,6 @@ class ModelLayer:
     @der_W.setter
     def der_W(self, der_W):
         self._der_W = der_W
-
-class Compile:
-    def __init__(self, optimizer: str | None = None, loss: str | None = None):
-        self._optimizer = optimizer
-        self._loss = loss
-
-    def get_loss(self):
-        return _Utils.get_with_warning(map_loss, self._loss, (Loss.quadratic, None), LOSS_NOT_FOUND)[LOSS_POS]
-    def get_loss_der(self):
-        return _Utils.get(map_loss, self._loss, (None, LossDerivative.quadratic))[LOSS_DER_POS]
 
 class BasicLayer:
     def __init__(self, units: int):
