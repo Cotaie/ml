@@ -1,8 +1,9 @@
 import numpy as np
-from constants import BIAS_INPUT_NDARRAY
-from activations import ident
-from utils import ModelLayer, Compile, BasicLayer
 from typing import Callable
+from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT
+from activations import Activation
+from utils import ModelLayer, Compile, BasicLayer
+
 
 class Layer(BasicLayer):
     def __init__(self, units: int, activation: str | None = None, kernel_initializer: Callable | None = None, name: str | None = None):
@@ -73,7 +74,7 @@ class Model:
         first_layer = self._model[0]
         first_layer.der_W.clear()
         for out in output:
-            first_layer.der_W.append(Model._compute_neuron_W_der(out, ident, x))
+            first_layer.der_W.append(Model._compute_neuron_W_der(out, Activation.ident, x))
     def compile(self, optimizer=None, loss=None):
         comp = Compile(optimizer, loss)
         self._optimizer = optimizer
@@ -85,7 +86,7 @@ class Model:
                 self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x, True), y), x)
                 self._adjust_W()
     def predict(self, input):
-        if self._feed_forward(input, False)[0] < 0.5:
+        if self._feed_forward(input, False)[0] < SIGMOID_MIDPOINT:
             return 0.
         else:
             return 1.

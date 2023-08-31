@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
 import pandas as pd
-from neural import Layer, Model
 import matplotlib.pyplot as plt
+from neural import Layer, Model
+
 
 class TestModel(unittest.TestCase):
     def test_two_inputs_one_output(self):
