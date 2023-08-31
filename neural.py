@@ -1,10 +1,10 @@
 import numpy as np
 from typing import Callable
-from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT, LOSS_NOT_FOUND, LOSS_POS, LOSS_DER_POS
+from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT, LOSS_NOT_FOUND
 from activations import Activation
 from loss import Loss, LossDerivative
 from normalization import Normalization
-from utils import _Utils, ModelLayer, BasicLayer, map_loss
+from utils import _Utils, ModelLayer, BasicLayer, MapLoss, map_loss
 
 
 class Layer(BasicLayer):
@@ -80,8 +80,8 @@ class Model:
             first_layer.der_W.append(Model._compute_neuron_W_der(out, Activation.ident, x))
     def compile(self, optimizer=None, loss=None, input_normalization=None):
         self._optimizer = optimizer
-        self._loss = _Utils.get_with_warning(map_loss, loss, (Loss.quadratic, None), LOSS_NOT_FOUND)[LOSS_POS]
-        self._loss_der = _Utils.get(map_loss, loss, (None, LossDerivative.quadratic))[LOSS_DER_POS]
+        self._loss = _Utils.get_with_warning(map_loss, loss, MapLoss(Loss.quadratic, None), LOSS_NOT_FOUND)._loss
+        self._loss_der = _Utils.get(map_loss, loss, MapLoss(None, LossDerivative.quadratic))._loss_der
         self._input_normalization = Normalization.no_normalization if input_normalization is None else input_normalization
     def fit(self, X, Y, epochs=1):
         self._norm_fct = self._input_normalization(X)
@@ -91,7 +91,4 @@ class Model:
                 self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y), x_normed)
                 self._adjust_W()
     def predict(self, input):
-        if self._feed_forward(self._norm_fct(input), False)[0] < SIGMOID_MIDPOINT:
-            return 0.
-        else:
-            return 1.
+        return 0 if self._feed_forward(self._norm_fct(input), False)[0] < SIGMOID_MIDPOINT else 1
