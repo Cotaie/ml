@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from neural import Layer, Model
 from normalization import Normalization
 from initializers import Initializers
-
+from constants import SIGMOID_MIDPOINT
 
 class TestModel(unittest.TestCase):
     def test_two_inputs_one_output(self):
@@ -15,13 +15,13 @@ class TestModel(unittest.TestCase):
         label = data['y'].values
         X = [list(item) for item in zip(data['x1'].values, data['x2'].values)]
         Y = [[item] for item in data['y'].values]
-        mod = Model([2, Layer(1, activation="sigmoid", kernel_initializer=Initializers.xavier_normal)])
-        mod.compile(loss='binary_crossentropy', input_normalization=Normalization.z_score)
-        mod.fit(X, Y, epochs=40)
+        mod = Model([2, Layer(1, activation="sigmoid", kernel_initializer=None)])
+        mod.compile(loss='binary_crossentropy', input_normalization=None)
+        mod.fit(X, Y, epochs=60)
         no_fails = 0
         fail = []
         for index,x in enumerate(X):
-            if mod.predict(x) != data.iloc[index]['y']:
+            if (0 if mod.predict(x) < SIGMOID_MIDPOINT else 1) != data.iloc[index]['y']:
                 no_fails = no_fails+1
                 fail.append(x)
                 #print(f"fail: {x}, ", f"csv: {data.iloc[index]['y']}", f"predicted {mod.predict(x)}")

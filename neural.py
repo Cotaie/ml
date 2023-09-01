@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Callable
-from constants import BIAS_INPUT_NDARRAY, SIGMOID_MIDPOINT, LOSS_NOT_FOUND
+from constants import BIAS_INPUT_NDARRAY, LOSS_NOT_FOUND
 from activations import Activation
 from loss import Loss, LossDerivative
 from normalization import Normalization
@@ -29,7 +29,7 @@ class Model:
         self._optimizer = None
         self._loss = None
         self._loss_der = None
-        self._norm_fct = None
+        self._norm_fct = Normalization.no_normalization(None)
         self._learning_rate = 0.01
         self._reg = 0
         self._reg_fact = 1
@@ -83,7 +83,7 @@ class Model:
         self._loss = _Utils.get_with_warning(map_loss, loss, MapLoss(Loss.quadratic, None), LOSS_NOT_FOUND)._loss
         self._loss_der = _Utils.get(map_loss, loss, MapLoss(None, LossDerivative.quadratic))._loss_der
         self._input_normalization = Normalization.no_normalization if input_normalization is None else input_normalization
-    def fit(self, X, Y, epochs=1):
+    def fit(self, X, Y, batch_size=32, epochs=1):
         self._norm_fct = self._input_normalization(X)
         for _ in range(epochs):
             for x, y in zip(X, Y):
@@ -91,4 +91,4 @@ class Model:
                 self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y), x_normed)
                 self._adjust_W()
     def predict(self, input):
-        return 0 if self._feed_forward(self._norm_fct(input), False)[0] < SIGMOID_MIDPOINT else 1
+        return self._feed_forward(self._norm_fct(input), False)
