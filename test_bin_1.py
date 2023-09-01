@@ -28,10 +28,10 @@ class TestModel(unittest.TestCase):
         for ex in fail:
             plt.scatter(ex[0], ex[1], color='black')
         print("number of fails:", no_fails)
-        plt.plot([0, 10], [b1, 10 * m1 + b1], '-r')
-        plt.scatter(x1_values[label == 0], x2_values[label == 0], label='Class 0', alpha=0.5)
-        plt.scatter(x1_values[label == 1], x2_values[label == 1], label='Class 1', alpha=0.5)
-        plt.legend()
-        plt.show()
+        # plt.plot([0, 10], [b1, 10 * m1 + b1], '-r')
+        # plt.scatter(x1_values[label == 0], x2_values[label == 0], label='Class 0', alpha=0.5)
+        # plt.scatter(x1_values[label == 1], x2_values[label == 1], label='Class 1', alpha=0.5)
+        # plt.legend()
+        # plt.show()
 if __name__ == "__main__":
     unittest.main()
