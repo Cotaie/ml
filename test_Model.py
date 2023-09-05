@@ -6,7 +6,7 @@ from normalization import Normalization
 class TestModel(unittest.TestCase):
     def test_fit(self):
         mlp = Model([2, Layer(3, activation="linear"), Layer(2, activation="linear")], 42)
-        mlp.compile(loss="mse", input_normalization=Normalization.z_score)
+        mlp.compile(loss="mse", input_normalization=None)
         if not np.allclose(mlp._model[0]._W, np.array([[ 0., 0.00496714, -0.00138264], [0., 0.00647689, 0.0152303], [0., -0.00234153, -0.00234137]])):
             self.fail("Layer 0 weights do not match expectations")
         if not np.allclose(mlp._model[1]._W, np.array([[ 0., 0.01579213, 0.00767435, -0.00469474], [0., 0.0054256, -0.00463418, -0.0046573]])):

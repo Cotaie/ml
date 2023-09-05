@@ -5,7 +5,7 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Input,Dense
 from keras.losses import BinaryCrossentropy
-from keras.optimizers import Adam
+from keras.optimizers import SGD, Adam
 
 
 data = pd.read_csv('data_fin_3.csv')

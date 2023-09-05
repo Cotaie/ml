@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import chain
 from typing import Callable
 from constants import BIAS_INPUT, LOSS_NOT_FOUND
 from activations import Activation
@@ -18,7 +19,7 @@ class Layer(BasicLayer):
 
 class Model:
     def __init__(self, model_arch: list, seed: int | None = None):
-        self._model = self._create_model(model_arch, seed)
+        self._model = self._build(model_arch, seed)
         self._optimizer = None
         self._loss = None
         self._loss_der = None
@@ -27,30 +28,24 @@ class Model:
         self._reg = 0
         self._reg_fact = 1
 
-    def _create_model(self, model_arch: list, seed: int | None):
+    def _build(self, model_arch: list, seed: int | None):
         np.random.seed(seed)
         previous_layer = BasicLayer(model_arch[0])
-        def _create_model_(layer, layer_index):
+        def _build_(layer, layer_index):
             nonlocal previous_layer
             model_layer = ModelLayer(previous_layer._units, layer._units, layer._activation, layer._kernel_initializer, layer.get_name_or_default(layer_index))
             previous_layer = layer
             return model_layer
-        return [_create_model_(layer, layer_index) for layer_index, layer in enumerate(model_arch[1:], start=1)]
-    def _feed_forward(self, input, update_z: bool):
+        return [_build_(layer, layer_index) for layer_index, layer in enumerate(model_arch[1:], start=1)]
+    def _feed_forward(self, input):
         output = input[:]
         def ff_update_z(layer):
             nonlocal output
             layer._z[:] = layer._W @ np.concatenate(([BIAS_INPUT], output))
             output = layer._activation(layer._z)
-        def ff_no_update_z(layer):
-            nonlocal output
-            output = layer._activation(layer._W @ np.concatenate(([BIAS_INPUT], output)))
-        ff = ff_update_z if update_z == True else ff_no_update_z
         for layer in self._model:
-            ff(layer)
+            ff_update_z(layer)
         return output
-    def _comp_loss_der_arr(self,y_pred, y_real):
-        return [self._loss_der(y_i_pred, y_i_real) for y_i_pred, y_i_real in zip(y_pred, y_real)]
     def _adjust_W(self):
         self._reg = 0
         for layer in self._model:
@@ -58,16 +53,15 @@ class Model:
                 row_w[:] = [w - self._learning_rate * der_w for w, der_w in zip(row_w, row_der_w)]
                 self._reg += sum(row_w)
     def _compute_gradients(self, output, x):
-        layers_reversed = self._model[::-1]
-        layers_reversed.append(ModelFirstLayer(x, Activation.ident))
-        prev_layer = layers_reversed[0]
+        layers_reversed = chain(reversed(self._model), iter([ModelFirstLayer(x, Activation.ident)]))
+        prev_layer = next(layers_reversed, None)
         def _compute_gradients_(layer):
             nonlocal prev_layer
             nonlocal output
             prev_layer._der_W[:] = [out * layer._activation(np.concatenate(([BIAS_INPUT], layer._z))) for out in output]
             output = output @ prev_layer._W[:, 1:]
             prev_layer = layer
-        for layer in layers_reversed[1:]:
+        for layer in layers_reversed:
             _compute_gradients_(layer)
     def compile(self, optimizer=None, loss=None, input_normalization=None):
         self._optimizer = optimizer
@@ -78,10 +72,28 @@ class Model:
         self._norm_fct = self._input_normalization(X)
         def fit_(x, y):
             x_normed = self._norm_fct(x)
-            self._compute_gradients(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y), x_normed)
+            self._compute_gradients(self._loss_der(self._feed_forward(x_normed), np.array(y)), x_normed)
             self._adjust_W()
         for _ in range(epochs):
             for x, y in zip(X, Y):
                 fit_(x, y)
+    # def fit(self, X, Y, batch_size, epochs):
+    #     #self._norm_fct = self._input_normalization(X)
+    #     for _ in range(epochs):
+    #         get_batch = Model._batch(X, Y, batch_size)
+    #         for X_batch, Y_batch in get_batch:
+    #             batch_loss_der = np.array([0.])
+    #             for x, y in zip(X_batch, Y_batch):
+    #                 x_normed = self._norm_fct(x)
+    #                 #np.add(batch_loss_der, np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y)), out=batch_loss_der)
+    #                 batch_loss_der += np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y))
+    #             len_mse = len(Y_batch)
+    #             #print("batch_size: ", len_mse)
+    #             #print("abg_batch:", batch_loss_der)
+    #             batch_loss_der /= float(len_mse)
+    #             for x, y in zip(X_batch, Y_batch):
+    #                 x_normed = self._norm_fct(x)
+    #                 self._compute_gradients(batch_loss_der, x_normed)
+    #                 self._adjust_W()
     def predict(self, input):
-        return self._feed_forward(self._norm_fct(input), False)
+        return self._feed_forward(self._norm_fct(input))

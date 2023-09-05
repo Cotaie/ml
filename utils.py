@@ -1,3 +1,4 @@
+import numpy as np
 import warnings
 from typing import Callable
 from constants import ACTIVATION_NOT_FOUND
@@ -39,8 +40,8 @@ class ModelLayer:
         self._activation = Utils.get_with_warning(map_activations, activation, map_activations['linear'], ACTIVATION_NOT_FOUND)._activation
         self._activation_der = Utils.get(map_activations, activation,  map_activations['linear'])._activation_der
         self._W = Utils.get(map_activations, self._activation,  map_activations['linear'])._kernel_initializer(no_inputs, no_neurons) if kernel_initializer is None else kernel_initializer(no_inputs, no_neurons)
-        self._der_W = []
-        self._z = []
+        self._der_W = np.empty(self._W.shape)
+        self._z = np.empty(no_neurons)
         self._name = name
 
 map_activations: dict[str, Callable] = {
