@@ -20,7 +20,7 @@ class Normalization:
         return min_max_
     def no_normalization(_input):
         def no_normalization_(x):
-            return x
+            return np.array(x)
         return no_normalization_
 
 class ZScoreData:

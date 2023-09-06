@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 from neural import Layer, Model
 from normalization import Normalization
 from initializers import Initializers
@@ -17,7 +18,7 @@ class TestModel(unittest.TestCase):
         Y = [[item] for item in data['y'].values]
         mod = Model([2, Layer(1, activation="sigmoid", kernel_initializer=None)])
         mod.compile(loss='binary_crossentropy', input_normalization=None)
-        mod.fit(X, Y, epochs=60)
+        mod.fit(X, Y, batch_size=5, epochs=60)
         no_fails = 0
         fail = []
         for index,x in enumerate(X):
@@ -25,8 +26,8 @@ class TestModel(unittest.TestCase):
                 no_fails = no_fails+1
                 fail.append(x)
                 #print(f"fail: {x}, ", f"csv: {data.iloc[index]['y']}", f"predicted {mod.predict(x)}")
-        for ex in fail:
-            plt.scatter(ex[0], ex[1], color='black')
+        # for ex in fail:
+        #     plt.scatter(ex[0], ex[1], color='black')
         print("number of fails:", no_fails)
         # plt.plot([0, 10], [b1, 10 * m1 + b1], '-r')
         # plt.scatter(x1_values[label == 0], x2_values[label == 0], label='Class 0', alpha=0.5)

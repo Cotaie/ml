@@ -36,11 +36,11 @@ mod.fit(normalized_X, Y, epochs=100)
 # for x, y in zip(X,Y):
 #     print("predict: ", mod.predict(x), "should be: ", y)
 norm_input = (np.array([2.357656480203747, 7.656358634495418]) - mean) / std
-print("ssssss", mod._feed_forward(norm_input))
+print("ssssss", mod._feedforward(norm_input))
 norm_input = (np.array([9.40930497537318, 0.5905728514607234]) - mean) / std
-print("ssssss", mod._feed_forward(norm_input))
+print("ssssss", mod._feedforward(norm_input))
 norm_input = (np.array([1.279576122435745, 8.746143873472004]) - mean) / std
-print("ssssss", mod._feed_forward(norm_input))
+print("ssssss", mod._feedforward(norm_input))
 
 
 
