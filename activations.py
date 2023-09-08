@@ -26,6 +26,8 @@ class ActivationDerivative:
         return sigmoid_value * (1.0 - sigmoid_value)
     @staticmethod
     def relu(z: float):
+        if isinstance(z, list):
+            z = np.array(z)
         return np.where(z > 0, 1, 0)
     @staticmethod
     def leaky_relu(z: float, alpha = LEAKINESS_FACTOR):

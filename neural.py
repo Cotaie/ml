@@ -3,9 +3,10 @@ import warnings
 from itertools import chain
 from typing import Callable
 from constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
-from activations import Activation
 from normalization import Normalization
-from maps import map_loss, map_activations
+from optimizers import SGD
+from evaluations import Evaluate
+from maps import MapActivation, MapLoss, map_loss, map_activations
 
 
 class _BasicLayer:
@@ -36,16 +37,28 @@ class Model:
         self._loss = None
         self._loss_der = None
         self._norm_fct = Normalization.no_normalization(None)
-        self._learning_rate = 0.01
         self._reg = 0
         self._reg_fact = 1
     @staticmethod
-    def get_with_warning(dict: dict, key: str, default: Callable, warning: str):
-          if key not in dict:
-             warnings.warn(warning)
-          return dict.get(key, default)
+    def get_with_warning(dict: dict, key: str, default: MapActivation | MapLoss , warning: str):
+        """
+        Retrieves the value associated with a given key from a dictionary.
+        If the key is not present, it issues a warning and returns a default value.
+        Parameters:
+        - dict (dict): The dictionary from which to retrieve the value.
+        - key (str): The key whose value needs to be retrieved.
+        - default (Callable): A default value or callable to return if the key is not present.
+        - warning (str): The warning message to issue if the key is not present.
+        Returns:
+        - The value associated with the key if present, otherwise the default value.
+        Warnings:
+        - Issues a warning if the key is not present in the dictionary.
+        """
+        if key not in dict:
+            warnings.warn(warning)
+        return dict.get(key, default)
     @staticmethod
-    def get(dict, key, default) -> Callable:
+    def get(dict: dict, key: str, default: MapActivation | MapLoss) -> Callable:
           return dict.get(key, default)
     @staticmethod
     def _batch(input, output, batch_size):
@@ -117,8 +130,9 @@ class Model:
         ΔW = - learning_rate * derivative_of_W
         The weights are updated in-place.
         """
+        optimizer = self._optimizer
         for layer in self._layers:
-            layer.W -= self._learning_rate * layer.der_W
+            optimizer.step(weights=layer.W, gradient=layer.der_W)
 
     def _backpropagation(self, output, x):
         """
@@ -135,12 +149,17 @@ class Model:
         delta_layer = output[:]
         layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
         prev_layer = next(layers_reversed)
+        # max_norm = 2.0
         for layer in layers_reversed:
             prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
+            # grad_norm = np.linalg.norm(prev_layer.der_W)
+            # print("grad_norm", grad_norm)
+            # if grad_norm > max_norm:
+            #     prev_layer.der_W *= (max_norm / grad_norm)
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
             prev_layer = layer
 
-    def compile(self, optimizer=None, loss=None, input_normalization=None):
+    def compile(self, optimizer=SGD(), loss=None, input_normalization=None):
         """
         Compile the model by setting up the optimizer, loss function, and input normalization method.
         Parameters:
@@ -169,12 +188,16 @@ class Model:
         - batch_size (int, optional): Size of batches for training. Defaults to 32.
         - epochs (int, optional): Number of times the training data should be iterated over. Defaults to 1.
         """
-        for _ in range(epochs):
+        loss_per_epoch = np.zeros(len(Y[0]))
+        for i in range(epochs):
             for x, y in zip(X, Y):
                 x_normed = self._norm_fct(x)
                 output = self._feedforward(x_normed, update_z=True)
+                loss_per_epoch += self._loss(output, np.array(y))
                 self._backpropagation(self._loss_der(output, np.array(y)), x_normed)
                 self._update_W()
+            print(f"loss in epoch {i}: ", loss_per_epoch)
+            loss_per_epoch = np.zeros(len(Y[0]))
 
     # def fit(self, X, Y, batch_size, epochs):
     #     #self._norm_fct = self._input_normalization(X)
@@ -197,6 +220,9 @@ class Model:
 
     def predict(self, input):
         return self._feedforward(self._norm_fct(input))
+
+    def evaluate(self, input_test, output_test):
+        return Evaluate.binary_classification(input_test, output_test, self._feedforward, self._loss)
 
     class _FirstModelLayer:
         def __init__(self, x):
