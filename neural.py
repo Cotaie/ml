@@ -39,6 +39,7 @@ class Model:
         self._norm_fct = Normalization.no_normalization(None)
         self._reg = 0
         self._reg_fact = 1
+        self._clip_W = False
     @staticmethod
     def get_with_warning(dict: dict, key: str, default: MapActivation | MapLoss , warning: str):
         """
@@ -75,7 +76,9 @@ class Model:
         num_batches = (len(input) + batch_size - 1) // batch_size
         for i in range(num_batches):
             yield (input[i * batch_size:(i + 1) * batch_size], output[i * batch_size:(i + 1) * batch_size])
-
+    @staticmethod
+    def _clip_W(weights):
+        np.clip(weights, a_min=-5, a_max=5, out=weights)
     def _build(self, model_arch: list, seed: int | None):
         """
         Builds model layers given architecture.
@@ -149,13 +152,10 @@ class Model:
         delta_layer = output[:]
         layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
         prev_layer = next(layers_reversed)
-        # max_norm = 1
-        # min_val = -max_norm
-        # max_val = max_norm
         for layer in layers_reversed:
             prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
-            #np.clip(prev_layer.der_W, min_val, max_val, out=prev_layer.der_W)
-            # print(prev_layer.der_W)
+            if (False):
+                Model._clip_W(prev_layer.der_W)
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
             prev_layer = layer
 
