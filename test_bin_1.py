@@ -6,7 +6,6 @@ from neural import Layer, Model
 from normalization import Normalization
 from initializers import Initializers
 from optimizers import SGD
-from constants import SIGMOID_MIDPOINT
 
 class TestModel(unittest.TestCase):
     def test_two_inputs_one_output(self):
@@ -26,8 +25,8 @@ class TestModel(unittest.TestCase):
         Y_validation = [[item] for item in data_validation['y'].values]
 
         mod = Model([2, Layer(1, activation="sigmoid", kernel_initializer=None)])
-        mod.compile(loss='binary_crossentropy', input_normalization=None, optimizer=SGD())
-        mod.fit(X, Y, batch_size=5, epochs=70)
+        mod.compile(loss='binary_crossentropy', input_normalization=None, optimizer=SGD(learning_rate=0.01 ,momentum=0.0, nesterov=False))
+        mod.fit(X, Y, batch_size=5, epochs=75)
         print("evaluate input: ", mod.evaluate(X,Y))
         print("evaluate test_input: ", mod.evaluate(X_validation,Y_validation))
 

@@ -149,13 +149,13 @@ class Model:
         delta_layer = output[:]
         layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
         prev_layer = next(layers_reversed)
-        # max_norm = 2.0
+        # max_norm = 1
+        # min_val = -max_norm
+        # max_val = max_norm
         for layer in layers_reversed:
             prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
-            # grad_norm = np.linalg.norm(prev_layer.der_W)
-            # print("grad_norm", grad_norm)
-            # if grad_norm > max_norm:
-            #     prev_layer.der_W *= (max_norm / grad_norm)
+            #np.clip(prev_layer.der_W, min_val, max_val, out=prev_layer.der_W)
+            # print(prev_layer.der_W)
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
             prev_layer = layer
 
@@ -188,15 +188,21 @@ class Model:
         - batch_size (int, optional): Size of batches for training. Defaults to 32.
         - epochs (int, optional): Number of times the training data should be iterated over. Defaults to 1.
         """
+        # X = np.array(X)
+        # Y = np.array(Y)
         loss_per_epoch = np.zeros(len(Y[0]))
-        for i in range(epochs):
+        for i in range(1, epochs+1):
+            # indices = np.arange(X.shape[0])
+            # np.random.shuffle(indices)
+            # X = X[indices]
+            # Y = Y[indices]
             for x, y in zip(X, Y):
                 x_normed = self._norm_fct(x)
                 output = self._feedforward(x_normed, update_z=True)
                 loss_per_epoch += self._loss(output, np.array(y))
                 self._backpropagation(self._loss_der(output, np.array(y)), x_normed)
                 self._update_W()
-            print(f"loss in epoch {i}: ", loss_per_epoch)
+            print(f"loss in epoch {i}: ", loss_per_epoch/len(Y))
             loss_per_epoch = np.zeros(len(Y[0]))
 
     # def fit(self, X, Y, batch_size, epochs):
@@ -222,7 +228,20 @@ class Model:
         return self._feedforward(self._norm_fct(input))
 
     def evaluate(self, input_test, output_test):
-        return Evaluate.binary_classification(input_test, output_test, self._feedforward, self._loss)
+        nr_fails = 0
+        sum_loss = np.zeros(len(output_test[0]))
+        nr_examples = len(output_test)
+        for x, y in zip(input_test, output_test):
+            pred_y = self._feedforward(self._norm_fct(x))
+            sum_loss += self._loss(np.array(pred_y), np.array(y))
+            if Evaluate.binary_classification(pred_y, y):
+               nr_fails = nr_fails + 1
+        accuracy = (nr_examples - nr_fails) / nr_examples
+        sum_loss /= nr_examples
+        return {
+            "loss": sum_loss,
+            "accuracy": accuracy
+        }
 
     class _FirstModelLayer:
         def __init__(self, x):
