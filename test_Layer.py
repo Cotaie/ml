@@ -1,5 +1,6 @@
 import unittest
-from neural import Layer
+from layers import Layer
+
 
 class TestLayer(unittest.TestCase):
     def test_Layer_only_units(self):

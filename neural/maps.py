@@ -1,5 +1,5 @@
 from typing import Callable
-from loss import Loss, LossDerivative
+from losses import Loss, LossDerivative
 from activations import Activation, ActivationDerivative
 from initializers import Initializers
 

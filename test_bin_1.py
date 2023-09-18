@@ -2,8 +2,9 @@ import unittest
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from neural import Layer, Model
-from normalization import Normalization
+from layers import Layer
+from neural import Model
+from normalizations import Normalization
 from initializers import Initializers
 from optimizers import SGD
 

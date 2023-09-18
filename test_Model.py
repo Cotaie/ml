@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
-from neural import Layer, Model
-from normalization import Normalization
+from layers import Layer
+from neural import Model
+from normalizations import Normalization
 
 class TestModel(unittest.TestCase):
     def test_fit(self):

@@ -3,32 +3,12 @@ import warnings
 from itertools import chain
 from typing import Callable
 from constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
-from normalization import Normalization
+from normalizations.normalizations import Normalization
 from optimizers import SGD
 from evaluations import Evaluate
-from maps import MapActivation, MapLoss, map_loss, map_activations
+from neural.maps import MapActivation, MapLoss, map_loss, map_activations
+from _basic import BasicLayer
 
-
-class _BasicLayer:
-    def __init__(self, units: int):
-        self.units = units
-
-class Layer(_BasicLayer):
-    def __init__(self, units: int, activation: str | None = None, kernel_initializer: Callable | None = None, name: str | None = None):
-        super().__init__(units)
-        self.activation = activation
-        self.kernel_initializer = kernel_initializer
-        self.name = name
-
-    def get_name_or_default(self, layer_no: int) -> str:
-        """
-        Retrieves the name of the layer if it's set, otherwise provides a default name based on the layer number.
-        Parameters:
-        - layer_no (int): The sequence number of the layer, used to generate a default name if the layer's name is not set.
-        Returns:
-        - str: The name of the layer or a default name in the format "layer_{layer_no}".
-        """
-        return self.name if self.name is not None else f"layer_{layer_no}"
 
 class Model:
     def __init__(self, model_arch: list, seed: int | None = None):
@@ -60,7 +40,17 @@ class Model:
         return dict.get(key, default)
     @staticmethod
     def get(dict: dict, key: str, default: MapActivation | MapLoss) -> Callable:
-          return dict.get(key, default)
+        """
+        Retrieve the value from the dictionary for the given key. If the key does not exist, return the default value.
+        This method is a utility function to fetch values from a dictionary with a specified default.
+        Parameters:
+        - dict (dict): The dictionary from which to retrieve the value.
+        - key (str): The key for which to fetch the value.
+        - default (MapActivation | MapLoss): The default value to return if the key is not present in the dictionary.
+        Returns:
+        Callable: The value associated with the specified key in the dictionary or the default value if the key is not present.
+        """
+        return dict.get(key, default)
     @staticmethod
     def _batch(input, output, batch_size):
         """
@@ -78,7 +68,17 @@ class Model:
             yield (input[i * batch_size:(i + 1) * batch_size], output[i * batch_size:(i + 1) * batch_size])
     @staticmethod
     def _clip_W(weights):
+        """
+        Clip the values of the given weights to lie within a specified range.
+        This method modifies the input weights in-place, ensuring all values are
+        within the range [-5, 5].
+        Parameters:
+        - weights (numpy array): The array of weights to be clipped.
+        Note:
+        This method modifies the input weights in-place and does not return anything.
+        """
         np.clip(weights, a_min=-5, a_max=5, out=weights)
+
     def _build(self, model_arch: list, seed: int | None):
         """
         Builds model layers given architecture.
@@ -93,7 +93,7 @@ class Model:
                 the given architecture and the number of units in the previous layer.
         """
         np.random.seed(seed)
-        previous_layer = _BasicLayer(model_arch[0])
+        previous_layer = BasicLayer(model_arch[0])
         def _build_layer(layer, layer_index):
             nonlocal previous_layer
             model_layer = Model._ModelLayer(previous_layer.units, layer.units, layer.activation, layer.kernel_initializer, layer.get_name_or_default(layer_index))
@@ -225,9 +225,36 @@ class Model:
     #                 self._adjust_W()
 
     def predict(self, input):
+        """
+        Predict the output for the given input using the model.
+        This method normalizes the input using the internal normalization function 
+        and then feeds it forward through the network to get the prediction.
+        Parameters:
+        - input (array-like): The input data for which the prediction is required.
+        Returns:
+        array-like: The predicted output for the given input.
+        Note:
+        The internal `_feedforward` and `_norm_fct` methods are used.
+        """
         return self._feedforward(self._norm_fct(input))
 
     def evaluate(self, input_test, output_test):
+        """
+        Evaluate the model's performance on the given test dataset.
+        This function computes the loss and accuracy of predictions over the test data.
+        For each example in the test dataset, it feeds the input through the network,
+        computes the loss between the predicted output and the true output, and checks
+        if the prediction is correct based on binary classification.
+        Parameters:
+        - input_test (list of array-like): List of input test data. Each item should correspond to the input of a single example.
+        - output_test (list of array-like): List of true output data corresponding to the input_test. Each item represents the true output of a single example.
+        Returns:
+        dict: A dictionary containing
+            - "loss": A numpy array representing the average loss per output component over the test data.
+            - "accuracy": A float representing the accuracy of the predictions on the test data.
+        Note:
+        The internal `_feedforward`, `_norm_fct`, `_loss`, and `Evaluate.binary_classification` methods are used.
+        """
         nr_fails = 0
         sum_loss = np.zeros(len(output_test[0]))
         nr_examples = len(output_test)

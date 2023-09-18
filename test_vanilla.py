@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from neural import Layer, Model
+from layers import Layer
+from neural import Model
 from initializers import Initializers
 
 data = pd.read_csv('data_bin_m1_10.csv')
