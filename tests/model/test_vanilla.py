@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,7 +6,7 @@ from neural.layers import Layer
 from neural.model import Model
 from neural.initializers import Initializers
 
-data = pd.read_csv('data_bin_m1_10.csv')
+data = pd.read_csv(os.path.dirname(os.path.abspath(__file__)) + '\data_bin_m1_10.csv')
 
 x1_values = data['x1'].values
 x2_values = data['x2'].values

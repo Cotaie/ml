@@ -1,7 +1,7 @@
 from typing import Callable
-from ..losses.losses import Loss, LossDerivative
-from ..activations.activations import Activation, ActivationDerivative
-from ..initializers.initializers import Initializers
+from neural.losses.losses import Loss, LossDerivative
+from neural.activations.activations import Activation, ActivationDerivative
+from neural.initializers.initializers import Initializers
 
 
 class MapActivation:

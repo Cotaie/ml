@@ -1,4 +1,5 @@
 import unittest
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,8 +11,8 @@ from neural.optimizers import SGD
 
 class TestModel(unittest.TestCase):
     def test_two_inputs_one_output(self):
-        data = pd.read_csv('data_bin_m1_10.csv')
-        data_validation = pd.read_csv('data_validation.csv')
+        data = pd.read_csv(os.path.dirname(os.path.abspath(__file__)) + '\data_bin_m1_10.csv')
+        data_validation = pd.read_csv(os.path.dirname(os.path.abspath(__file__)) + '\data_validation.csv')
         m1, b1 = -1, 10
         x1_values = data['x1'].values
         x2_values = data['x2'].values

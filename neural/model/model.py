@@ -2,12 +2,12 @@ import numpy as np
 import warnings
 from itertools import chain
 from typing import Callable
-from ..normalizations.normalizations import Normalization
+from neural.normalizations import Normalization
 from neural.optimizers import SGD
 from neural.evaluations import Evaluate
-from .maps import MapActivation, MapLoss, map_loss, map_activations
+from neural.model.maps import MapActivation, MapLoss, map_loss, map_activations
 from neural._basic import BasicLayer
-from ..constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
+from neural.constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
 
 
 class Model:
@@ -227,7 +227,7 @@ class Model:
     def predict(self, input):
         """
         Predict the output for the given input using the model.
-        This method normalizes the input using the internal normalization function 
+        This method normalizes the input using the internal normalization function
         and then feeds it forward through the network to get the prediction.
         Parameters:
         - input (array-like): The input data for which the prediction is required.

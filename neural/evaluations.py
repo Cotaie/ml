@@ -1,4 +1,4 @@
-from .constants import SIGMOID_MIDPOINT
+from neural.constants import SIGMOID_MIDPOINT
 
 class Evaluate:
     @staticmethod

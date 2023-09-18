@@ -1,5 +1,5 @@
-from .._basic.basic import BasicLayer
 from typing import Callable
+from neural._basic.basic import BasicLayer
 
 
 class Layer(BasicLayer):
