@@ -1,5 +1,5 @@
 import numpy as np
-from constants import MEAN, VARIANCE
+from neural.constants import MEAN, VARIANCE
 
 
 class Initializers:

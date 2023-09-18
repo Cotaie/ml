@@ -2,12 +2,12 @@ import numpy as np
 import warnings
 from itertools import chain
 from typing import Callable
-from constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
-from normalizations.normalizations import Normalization
-from optimizers import SGD
-from evaluations import Evaluate
-from neural.maps import MapActivation, MapLoss, map_loss, map_activations
-from _basic import BasicLayer
+from ..normalizations.normalizations import Normalization
+from neural.optimizers import SGD
+from neural.evaluations import Evaluate
+from .maps import MapActivation, MapLoss, map_loss, map_activations
+from neural._basic import BasicLayer
+from ..constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
 
 
 class Model:

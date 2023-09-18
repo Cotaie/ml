@@ -1,5 +1,5 @@
 import numpy as np
-from constants import EPSILON
+from neural.constants import EPSILON
 
 
 class Loss:

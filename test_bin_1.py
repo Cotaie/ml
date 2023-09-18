@@ -2,11 +2,11 @@ import unittest
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from layers import Layer
-from neural import Model
-from normalizations import Normalization
-from initializers import Initializers
-from optimizers import SGD
+from neural.layers import Layer
+from neural.model import Model
+from neural.normalizations import Normalization
+from neural.initializers import Initializers
+from neural.optimizers import SGD
 
 class TestModel(unittest.TestCase):
     def test_two_inputs_one_output(self):

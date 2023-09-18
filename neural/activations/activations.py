@@ -1,5 +1,5 @@
 import numpy as np
-from constants import SIGMOID_CLIPPING, LEAKINESS_FACTOR
+from neural.constants import SIGMOID_CLIPPING, LEAKINESS_FACTOR
 
 
 class Activation:

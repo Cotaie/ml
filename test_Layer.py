@@ -1,5 +1,5 @@
 import unittest
-from layers import Layer
+from neural.layers import Layer
 
 
 class TestLayer(unittest.TestCase):

@@ -1,5 +1,6 @@
-from _basic import BasicLayer
+from .._basic.basic import BasicLayer
 from typing import Callable
+
 
 class Layer(BasicLayer):
     def __init__(self, units: int, activation: str | None = None, kernel_initializer: Callable | None = None, name: str | None = None):
