@@ -256,6 +256,7 @@ class Model:
         The internal `_feedforward`, `_norm_fct`, `_loss`, and `Evaluate.binary_classification` methods are used.
         """
         nr_fails = 0
+        fail = []
         sum_loss = np.zeros(len(output_test[0]))
         nr_examples = len(output_test)
         for x, y in zip(input_test, output_test):
@@ -263,11 +264,13 @@ class Model:
             sum_loss += self._loss(np.array(pred_y), np.array(y))
             if Evaluate.binary_classification(pred_y, y):
                nr_fails = nr_fails + 1
+               fail.append(x)
         accuracy = (nr_examples - nr_fails) / nr_examples
         sum_loss /= nr_examples
         return {
             "loss": sum_loss,
-            "accuracy": accuracy
+            "accuracy": accuracy,
+            "failed_list": fail
         }
 
     class _FirstModelLayer:
