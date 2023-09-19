@@ -191,18 +191,14 @@ class Model:
         # X = np.array(X)
         # Y = np.array(Y)
         loss_per_epoch = np.zeros(len(Y[0]))
-        for i in range(1, epochs+1):
-            # indices = np.arange(X.shape[0])
-            # np.random.shuffle(indices)
-            # X = X[indices]
-            # Y = Y[indices]
+        for i in range(epochs):
             for x, y in zip(X, Y):
                 x_normed = self._norm_fct(x)
                 output = self._feedforward(x_normed, update_z=True)
                 loss_per_epoch += self._loss(output, np.array(y))
                 self._backpropagation(self._loss_der(output, np.array(y)), x_normed)
                 self._update_W()
-            print(f"loss in epoch {i}: ", loss_per_epoch/len(Y))
+            print(f"loss in epoch {i+1}: ", loss_per_epoch/len(Y))
             loss_per_epoch = np.zeros(len(Y[0]))
 
     # def fit(self, X, Y, batch_size, epochs):
