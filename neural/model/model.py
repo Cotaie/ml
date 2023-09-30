@@ -23,17 +23,6 @@ class Model:
     @staticmethod
     def get_with_warning(dict: dict, key: str, default: MapActivation | MapLoss , warning: str):
         """
-        Retrieves the value associated with a given key from a dictionary.
-        If the key is not present, it issues a warning and returns a default value.
-        Parameters:
-        - dict (dict): The dictionary from which to retrieve the value.
-        - key (str): The key whose value needs to be retrieved.
-        - default (Callable): A default value or callable to return if the key is not present.
-        - warning (str): The warning message to issue if the key is not present.
-        Returns:
-        - The value associated with the key if present, otherwise the default value.
-        Warnings:
-        - Issues a warning if the key is not present in the dictionary.
         """
         if key not in dict:
             warnings.warn(warning)
@@ -41,27 +30,11 @@ class Model:
     @staticmethod
     def get(dict: dict, key: str, default: MapActivation | MapLoss) -> Callable:
         """
-        Retrieve the value from the dictionary for the given key. If the key does not exist, return the default value.
-        This method is a utility function to fetch values from a dictionary with a specified default.
-        Parameters:
-        - dict (dict): The dictionary from which to retrieve the value.
-        - key (str): The key for which to fetch the value.
-        - default (MapActivation | MapLoss): The default value to return if the key is not present in the dictionary.
-        Returns:
-        Callable: The value associated with the specified key in the dictionary or the default value if the key is not present.
         """
         return dict.get(key, default)
     @staticmethod
     def _batch(input, output, batch_size):
         """
-        Generate batches of data from the provided input and output lists (or arrays).
-        Parameters:
-        - input (list or array-like): The input data list or array.
-        - output (list or array-like): The corresponding output (labels or target values) list or array.
-        - batch_size (int): The size of each batch.
-        Yields:
-        - tuple: A tuple containing a batch of input data and its corresponding output. The size of each
-                batch is determined by `batch_size`, except possibly for the last batch which might be smaller.
         """
         num_batches = (len(input) + batch_size - 1) // batch_size
         for i in range(num_batches):
@@ -69,28 +42,21 @@ class Model:
     @staticmethod
     def _clip_W(weights):
         """
-        Clip the values of the given weights to lie within a specified range.
-        This method modifies the input weights in-place, ensuring all values are
-        within the range [-5, 5].
-        Parameters:
-        - weights (numpy array): The array of weights to be clipped.
-        Note:
-        This method modifies the input weights in-place and does not return anything.
         """
         np.clip(weights, a_min=-5, a_max=5, out=weights)
+    @staticmethod
+    def _normalize_der_W(der_W, norm_value=1.0):
+        """
+        """
+        norm = np.linalg.norm(der_W)
+        #print("norm: ", norm)
+        if norm == 0:
+            return der_W
+        else:
+            return (der_W / norm) * norm_value
 
     def _build(self, model_arch: list, seed: int | None):
         """
-        Builds model layers given architecture.
-        Parameters:
-        - model_arch (list): List of layers where each layer is an object with attributes
-                            detailing its architecture (e.g., number of units, activation
-                            function, kernel initializer, etc.).
-        - seed (int | None): Seed for the numpy random number generator. Setting this ensures
-                            reproducible random behaviors. If None, seeding is not applied.
-        Returns:
-        - list: A list of model layers that is constructed based on
-                the given architecture and the number of units in the previous layer.
         """
         np.random.seed(seed)
         previous_layer = BasicLayer(model_arch[0])
@@ -103,12 +69,6 @@ class Model:
 
     def _feedforward(self, input, update_z=False):
         """
-        Propagate the input through the network layers.
-        Parameters:
-        - input (np.array): The input data to feed forward through the model.
-        - update_z (bool, optional): Flag to determine if the intermediate z-values should be updated. Default is False.
-        Returns:
-        - current_output (np.array): The output after passing through all layers.
         """
         current_output = input[:]
         def ff_update_z(layer):
@@ -129,9 +89,6 @@ class Model:
 
     def _update_W(self):
         """
-        Updates the weights of each layer in the model using the equation:
-        ΔW = - learning_rate * derivative_of_W
-        The weights are updated in-place.
         """
         optimizer = self._optimizer
         for layer in self._layers:
@@ -139,15 +96,6 @@ class Model:
 
     def _backpropagation(self, output, x):
         """
-        Performs the backpropagation algorithm to compute the gradient of the loss
-        with respect to the network's weights for a given input and output.
-        The method traverses the network in reverse (from output to input) to
-        compute the gradient for each layer based on the "delta" (error gradient)
-        of the subsequent layer.
-        Parameters:
-        - output (array-like): The derivative of the loss with respect to the
-                            network's final output.
-        - x (array-like): The input data sample.
         """
         delta_layer = output[:]
         layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
@@ -155,24 +103,13 @@ class Model:
         for layer in layers_reversed:
             prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
             if (False):
-                Model._clip_W(prev_layer.der_W)
+                #Model._clip_W(prev_layer.der_W)
+                prev_layer.der_W = Model._normalize_der_W(prev_layer.der_W)
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
             prev_layer = layer
 
     def compile(self, optimizer=SGD(), loss=None, input_normalization=None):
         """
-        Compile the model by setting up the optimizer, loss function, and input normalization method.
-        Parameters:
-        - optimizer (optional): The optimization method to use for training the model. If not provided,
-                                the model will retain its previous optimizer or have no optimizer if it
-                                hasn't been set before.
-        - loss (str or None, optional): The name/key of the loss function to be used. If not provided,
-                                    the 'mean_squared_error' loss function is set as default. If the given
-                                    loss name/key is not found in the `map_loss` dictionary, a warning
-                                    will be issued and 'mean_squared_error' will be used.
-        - input_normalization (callable or None, optional): The normalization method to apply to the
-                                                        model input data. If not provided,
-                                                        'no_normalization' is set as default.
         """
         self._optimizer = optimizer
         self._loss = Model.get_with_warning(map_loss, loss, map_loss['mean_squared_error'], LOSS_NOT_FOUND).loss
@@ -181,12 +118,6 @@ class Model:
 
     def fit(self, X, Y, batch_size=32, epochs=1):
         """
-        Trains the neural network using the provided input data and labels.
-        Parameters:
-        - X (array-like): Input data for training. Each element of X is a single sample.
-        - Y (array-like): Target labels corresponding to each sample in X.
-        - batch_size (int, optional): Size of batches for training. Defaults to 32.
-        - epochs (int, optional): Number of times the training data should be iterated over. Defaults to 1.
         """
         # X = np.array(X)
         # Y = np.array(Y)
@@ -222,34 +153,11 @@ class Model:
 
     def predict(self, input):
         """
-        Predict the output for the given input using the model.
-        This method normalizes the input using the internal normalization function
-        and then feeds it forward through the network to get the prediction.
-        Parameters:
-        - input (array-like): The input data for which the prediction is required.
-        Returns:
-        array-like: The predicted output for the given input.
-        Note:
-        The internal `_feedforward` and `_norm_fct` methods are used.
         """
         return self._feedforward(self._norm_fct(input))
 
     def evaluate(self, input_test, output_test):
         """
-        Evaluate the model's performance on the given test dataset.
-        This function computes the loss and accuracy of predictions over the test data.
-        For each example in the test dataset, it feeds the input through the network,
-        computes the loss between the predicted output and the true output, and checks
-        if the prediction is correct based on binary classification.
-        Parameters:
-        - input_test (list of array-like): List of input test data. Each item should correspond to the input of a single example.
-        - output_test (list of array-like): List of true output data corresponding to the input_test. Each item represents the true output of a single example.
-        Returns:
-        dict: A dictionary containing
-            - "loss": A numpy array representing the average loss per output component over the test data.
-            - "accuracy": A float representing the accuracy of the predictions on the test data.
-        Note:
-        The internal `_feedforward`, `_norm_fct`, `_loss`, and `Evaluate.binary_classification` methods are used.
         """
         nr_fails = 0
         fail = []

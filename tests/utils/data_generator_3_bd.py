@@ -7,7 +7,7 @@ N = 5000
 
 # Generate random data points
 x = np.random.rand(N) * 10  # Random x values between 0 and 10
-y = np.random.rand(N) * 10  # Random y values between 0 and 10
+y = np.random.rand(N) * 8  # Random y values between 0 and 10
 
 # Define the lines: y = mx + b
 m1, b1 = -1, 10   # First line

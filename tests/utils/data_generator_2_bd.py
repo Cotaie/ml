@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 N = 10000
 
 # Generate random data points
-x = np.random.rand(N) * 10  # Random x values between 0 and 10
-y = np.random.rand(N) * 10  # Random y values between 0 and 10
+x = np.random.rand(N) * 100  # Random x values between 0 and 10
+y = np.random.rand(N) * 100  # Random y values between 0 and 10
 
 # Define the lines: y = mx + b
-m1, b1 = -1, 10   # First line
-m2, b2 = 0, 2   # Second line
+m1, b1 = 1, 33   # First line
+m2, b2 = -1, 66  # Second line
 #m3, b3 = 1, 0   # Third line
 
 # Classify data points
@@ -33,8 +33,8 @@ df.to_csv('data_2_db_1.csv', index=False)
 # Plotting
 plt.scatter(x[labels == 0], y[labels == 0], label='Class 0', alpha=0.5)
 plt.scatter(x[labels == 1], y[labels == 1], label='Class 1', alpha=0.5)
-plt.plot([0, 10], [b1, 10 * m1 + b1], '-r')
-plt.plot([0, 10], [b2, 10 * m2 + b2], '-g')
+plt.plot([0, 100], [b1, 100 * m1 + b1], '-r')
+plt.plot([0, 100], [b2, 100 * m2 + b2], '-g')
 #plt.plot([0, 10], [b3, 10 * m3 + b3], '-b')
 plt.legend()
 plt.show()
