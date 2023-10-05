@@ -90,9 +90,8 @@ class Model:
     def _update_W(self):
         """
         """
-        optimizer = self._optimizer
         for layer in self._layers:
-            optimizer.step(weights=layer.W, gradient=layer.der_W)
+            self._optimizer.step(layer)
 
     def _backpropagation(self, output, x):
         """
@@ -102,7 +101,7 @@ class Model:
         prev_layer = next(layers_reversed)
         for layer in layers_reversed:
             prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
-            if (False):
+            if (True):
                 #Model._clip_W(prev_layer.der_W)
                 prev_layer.der_W = Model._normalize_der_W(prev_layer.der_W)
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
@@ -166,7 +165,7 @@ class Model:
         for x, y in zip(input_test, output_test):
             pred_y = self._feedforward(self._norm_fct(x))
             sum_loss += self._loss(np.array(pred_y), np.array(y))
-            if Evaluate.binary_classification(pred_y, y):
+            if Evaluate.linear(pred_y, y):
                nr_fails = nr_fails + 1
                fail.append(x)
         accuracy = (nr_examples - nr_fails) / nr_examples

@@ -5,22 +5,12 @@ class SGD:
         self._learning_rate = learning_rate
         self._momentum = momentum
         self._nesterov = nesterov
-        self._previous_update = None
+        self._velocity = {}
 
-    def step(self, weights, gradient):
-        # # If the previous update is not initialized, initialize it to zeros (same shape as weights)
-        # if self._previous_update is None:
-        #     self._previous_update = np.zeros_like(weights)
-
-        # # If using Nesterov momentum, compute the gradient after the "look-ahead"
-        # if self._nesterov:
-        #     lookahead_gradient = gradient + self._momentum * self._previous_update
-        #     update = self._momentum * self._previous_update - self._learning_rate * lookahead_gradient
-        # else:
-        #     update = self._momentum * self._previous_update - self._learning_rate * gradient
-
-        # weights += update
-
-        # # Store the current update for the next iteration
-        # self._previous_update = update
-        weights -= self._learning_rate * gradient
+    def step(self, layer):
+        if layer.name not in self._velocity:
+            self._velocity[layer.name] = np.zeros_like(layer.W)
+        velocity = self._momentum * self._velocity[layer.name] + (1 - self._momentum) * layer.der_W
+        layer.W -= self._learning_rate * velocity
+        self._velocity[layer.name] = velocity
+        #layer.W -= self._learning_rate * layer.der_W
