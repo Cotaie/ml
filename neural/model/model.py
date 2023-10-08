@@ -118,11 +118,15 @@ class Model:
     def fit(self, X, Y, batch_size=32, epochs=1):
         """
         """
-        # X = np.array(X)
-        # Y = np.array(Y)
+        X = np.array(X)
+        Y = np.array(Y)
+        indices = np.arange(len(X))
         loss_per_epoch = np.zeros(len(Y[0]))
         for i in range(epochs):
-            for x, y in zip(X, Y):
+            np.random.shuffle(indices)
+            X_shuffled = X[indices]
+            Y_shuffled = Y[indices]
+            for x, y in zip(X_shuffled, Y_shuffled):
                 x_normed = self._norm_fct(x)
                 output = self._feedforward(x_normed, update_z=True)
                 loss_per_epoch += self._loss(output, np.array(y))
