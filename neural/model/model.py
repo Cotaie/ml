@@ -87,6 +87,35 @@ class Model:
             ff(layer)
         return current_output
 
+    # def _feedforward(self, input, update_z=False):
+    #     """
+    #     """
+    #     current_output = input[:]
+    #     #print("input: ", current_output)
+    #     def ff_update_z(layer):
+    #         nonlocal current_output
+    #         input_with_bias = np.array([np.concatenate(([BIAS_INPUT], example)) for example in current_output])
+    #         #print("input with bias: ", input_with_bias)
+    #         #print("W: ", layer.W)
+    #         #z = np.dot(input_with_bias, layer.W.T)
+    #         z = np.dot(input_with_bias, layer.W.T)
+    #         #print("z: ", z)
+    #         #print("z: ", z)
+    #         layer.z = z
+    #         current_output = layer.activation(z)
+    #     def ff_no_update_z(layer):
+    #         nonlocal current_output
+    #         input_with_bias = np.array([np.concatenate(([BIAS_INPUT], example)) for example in current_output])
+    #         #print("input with bias: ", input_with_bias)
+    #         #print("W: ", layer.W)
+    #         z = np.dot(input_with_bias, layer.W.T)
+    #         #print("z: ", z)
+    #         current_output = layer.activation(z)
+    #     ff = ff_update_z if update_z else ff_no_update_z
+    #     for layer in self._layers:
+    #         ff(layer)
+    #     return current_output
+
     def _update_W(self):
         """
         """
@@ -107,6 +136,24 @@ class Model:
             delta_layer = delta_layer @ prev_layer.W[:, 1:]
             prev_layer = layer
 
+    # def _backpropagation(self, output, x, batch_size):
+    #     """
+    #     """
+    #     delta_layer = output[:]
+    #     layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
+    #     prev_layer = next(layers_reversed)
+    #     for layer in layers_reversed:
+    #         #prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
+    #         prev_layer.der_W_sum = []
+    #         for ex in layer.z:
+    #             prev_layer.der_W_sum.append(np.array([delta * layer.activation(np.concatenate(([BIAS_INPUT], ex))) for delta in delta_layer]))
+    #         prev_layer.der_W = sum(prev_layer.der_W_sum) / batch_size
+    #         if (True):
+    #             #Model._clip_W(prev_layer.der_W)
+    #             prev_layer.der_W = Model._normalize_der_W(prev_layer.der_W)
+    #         delta_layer = delta_layer @ prev_layer.W[:, 1:]
+    #         prev_layer = layer
+
     def compile(self, optimizer=SGD(), loss=None, input_normalization=None):
         """
         """
@@ -120,8 +167,11 @@ class Model:
         """
         X = np.array(X)
         Y = np.array(Y)
-        indices = np.arange(len(X))
-        loss_per_epoch = np.zeros(len(Y[0]))
+        self._norm_fct = self._input_normalization(X)
+        nr_examples = len(X)
+        nr_output_neurons = len(Y[0])
+        indices = np.arange(nr_examples)
+        loss_per_epoch = np.zeros(nr_output_neurons)
         for i in range(epochs):
             np.random.shuffle(indices)
             X_shuffled = X[indices]
@@ -129,30 +179,52 @@ class Model:
             for x, y in zip(X_shuffled, Y_shuffled):
                 x_normed = self._norm_fct(x)
                 output = self._feedforward(x_normed, update_z=True)
-                loss_per_epoch += self._loss(output, np.array(y))
                 self._backpropagation(self._loss_der(output, np.array(y)), x_normed)
                 self._update_W()
-            print(f"loss in epoch {i+1}: ", loss_per_epoch/len(Y))
-            loss_per_epoch = np.zeros(len(Y[0]))
+                loss_per_epoch += self._loss(output, np.array(y))
+            print(f"loss in epoch {i+1}: ", loss_per_epoch/nr_examples)
+            loss_per_epoch = np.zeros(nr_output_neurons)
 
-    # def fit(self, X, Y, batch_size, epochs):
-    #     #self._norm_fct = self._input_normalization(X)
-    #     for _ in range(epochs):
-    #         get_batch = Model._batch(X, Y, batch_size)
-    #         for X_batch, Y_batch in get_batch:
-    #             batch_loss_der = np.array([0.])
-    #             for x, y in zip(X_batch, Y_batch):
-    #                 x_normed = self._norm_fct(x)
-    #                 #np.add(batch_loss_der, np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y)), out=batch_loss_der)
-    #                 batch_loss_der += np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y))
-    #             len_mse = len(Y_batch)
-    #             #print("batch_size: ", len_mse)
-    #             #print("abg_batch:", batch_loss_der)
-    #             batch_loss_der /= float(len_mse)
-    #             for x, y in zip(X_batch, Y_batch):
-    #                 x_normed = self._norm_fct(x)
-    #                 self._compute_gradients(batch_loss_der, x_normed)
-    #                 self._adjust_W()
+    # def fit(self, X, Y, batch_size=32, epochs=1):
+    #     """
+    #     """
+    #     self._norm_fct = self._input_normalization(X)
+    #     nr_examples = len(X)
+    #     nr_output_neurons = len(Y[0])
+    #     X = np.array(X)
+    #     Y = np.array(Y)
+    #     indices = np.arange(nr_examples)
+    #     loss_per_epoch = np.zeros(nr_output_neurons)
+    #     for i in range(epochs):
+    #         np.random.shuffle(indices)
+    #         X_shuffled = X[indices]
+    #         Y_shuffled = Y[indices]
+    #         for X_batch, Y_batch in Model._batch(X_shuffled, Y_shuffled, batch_size):
+    #             X_batch_normed = np.array([self._norm_fct(x) for x in X_batch])
+    #             output = self._feedforward(X_batch_normed, update_z=True)
+    #             #print(f"output {i}", output)
+    #             cost_der = self._loss_der(output, Y_batch)
+    #             cost_mean_der = sum(cost_der) / batch_size
+    #             #cost_mean = sum()
+    #             #print("cost: ", cost_mean)
+    #             self._backpropagation(cost_mean_der, X_batch_normed, batch_size)
+    #             loss_per_epoch += sum(self._loss(output, Y_batch))
+    #             self._update_W()
+    #         print(f"loss in epoch {i+1}: ", loss_per_epoch/nr_examples)
+    #         loss_per_epoch = np.zeros(nr_output_neurons)
+
+
+                #loss_per_epoch += self._loss(output, np.array(y))
+                    #np.add(batch_loss_der, np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y)), out=batch_loss_der)
+                    #batch_loss_der += np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y))
+                # len_mse = len(Y_batch)
+                # #print("batch_size: ", len_mse)
+                # #print("abg_batch:", batch_loss_der)
+                # batch_loss_der /= float(len_mse)
+                # for x, y in zip(X_batch, Y_batch):
+                #     x_normed = self._norm_fct(x)
+                #     self._compute_gradients(batch_loss_der, x_normed)
+                #     self._adjust_W()
 
     def predict(self, input):
         """
