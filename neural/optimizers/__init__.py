@@ -1,1 +1,1 @@
-from .optimizers import SGD
+from .optimizers import SGD, AdaGrad
