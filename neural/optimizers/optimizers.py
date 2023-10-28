@@ -2,25 +2,45 @@ import numpy as np
 from neural.constants import EPSILON
 
 class SGD:
-    def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
+    def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False, clipvalue=None):
         self._learning_rate = learning_rate
         self._momentum = momentum
         self._nesterov = nesterov
-        self._velocity = {}
+        self._velocity_W = {}
+        self._velocity_b = {}
+        self._clipvalue = clipvalue
 
     def step(self, layer):
-        lookahead = 0
-        if self._nesterov and layer.name in self._velocity:
-            lookahead = self._momentum * self._velocity[layer.name]
-            layer.W -= lookahead  # Adjust weights with the lookahead term
+        # # For weights (W)
+        # lookahead_W = 0
+        # if self._nesterov and layer.name in self._velocity_W:
+        #     lookahead_W = self._momentum * self._velocity_W[layer.name]
+        #     layer.W -= lookahead_W  # Adjust weights with the lookahead term
 
-        scaled_gradient = (1 - self._momentum) * layer.der_W
-        self._velocity[layer.name] = self._momentum * self._velocity.get(layer.name, 0) + scaled_gradient
+        # scaled_gradient_W = (1 - self._momentum) * layer.der_W
+        # self._velocity_W[layer.name] = self._momentum * self._velocity_W.get(layer.name, 0) + scaled_gradient_W
 
-        layer.W += lookahead  # Reverse the lookahead adjustment (if lookahead is 0, this does nothing)
-        layer.W -= self._learning_rate * self._velocity[layer.name]
+        # layer.W += lookahead_W  # Reverse the lookahead adjustment (if lookahead_W is 0, this does nothing)
+        # layer.W -= self._learning_rate * self._velocity_W[layer.name]
 
-        # layer.W -= self._learning_rate * layer.der_W
+        # # For biases (b)
+        # lookahead_b = 0
+        # if self._nesterov and layer.name in self._velocity_b:
+        #     lookahead_b = self._momentum * self._velocity_b[layer.name]
+        #     layer.b -= lookahead_b  # Adjust biases with the lookahead term
+
+        # scaled_gradient_b = (1 - self._momentum) * layer.der_b
+        # self._velocity_b[layer.name] = self._momentum * self._velocity_b.get(layer.name, 0) + scaled_gradient_b
+
+        # layer.b += lookahead_b  # Reverse the lookahead adjustment (if lookahead_b is 0, this does nothing)
+        # layer.b -= self._learning_rate * self._velocity_b[layer.name]
+
+        if self._clipvalue is not None:
+            clipvalue = self._clipvalue
+            np.clip(layer.der_b, a_min=-clipvalue, a_max=clipvalue, out=layer.der_b)
+            np.clip(layer.der_W, a_min=-clipvalue, a_max=clipvalue, out=layer.der_W)
+        layer.b -= self._learning_rate * layer.der_b
+        layer.W -= self._learning_rate * layer.der_W
 
 class AdaGrad:
     def __init__(self, learning_rate=0.01, epsilon=EPSILON):

@@ -2,7 +2,6 @@ import sys
 
 
 EPSILON = sys.float_info.epsilon
-BIAS_INPUT = 1
 SIGMOID_CLIPPING = 709
 SIGMOID_MIDPOINT = 0.5
 ACTIVATION_NOT_FOUND = "activation function not found, linear is used"

@@ -1,13 +1,12 @@
 import numpy as np
 import warnings
-from itertools import chain
 from typing import Callable
 from neural.normalizations import Normalization
 from neural.optimizers import SGD
 from neural.evaluations import Evaluate
 from neural.model.maps import MapActivation, MapLoss, map_loss, map_activations
 from neural._basic import BasicLayer
-from neural.constants import BIAS_INPUT, LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
+from neural.constants import LOSS_NOT_FOUND, ACTIVATION_NOT_FOUND
 
 
 class Model:
@@ -40,20 +39,21 @@ class Model:
         for i in range(num_batches):
             yield (input[i * batch_size:(i + 1) * batch_size], output[i * batch_size:(i + 1) * batch_size])
     @staticmethod
-    def _clip_W(weights):
+    def _clip_der(der, value=1):
         """
         """
-        np.clip(weights, a_min=-5, a_max=5, out=weights)
+        np.clip(der, a_min=-value, a_max=value, out=der)
     @staticmethod
-    def _normalize_der_W(der_W, norm_value=1.0):
+    def _normalize_der_W(der_b, der_W, norm_value=1.0):
         """
         """
-        norm = np.linalg.norm(der_W)
+        der_bW = np.hstack((der_b.reshape(-1,1), der_W))
+        norm = np.linalg.norm(der_bW)
         #print("norm: ", norm)
         if norm == 0:
-            return der_W
+            return (np.array([sub_lst[0] for sub_lst in der_bW]), np.array([sub_lst[1:] for sub_lst in der_bW]))
         else:
-            return (der_W / norm) * norm_value
+            return ((np.array([sub_lst[0] for sub_lst in der_bW]) / norm) * norm_value, (np.array([sub_lst[1:] for sub_lst in der_bW]) / norm) * norm_value)
 
     def _build(self, model_arch: list, seed: int | None):
         """
@@ -70,51 +70,13 @@ class Model:
     def _feedforward(self, input, update_z=False):
         """
         """
-        current_output = input[:]
-        def ff_update_z(layer):
-            nonlocal current_output
-            input_with_bias = np.concatenate(([BIAS_INPUT], current_output))
-            z = layer.W @ input_with_bias
-            layer.z[:] = z
-            current_output = layer.activation(z)
-        def ff_no_update_z(layer):
-            nonlocal current_output
-            input_with_bias = np.concatenate(([BIAS_INPUT], current_output))
-            z = layer.W @ input_with_bias
-            current_output = layer.activation(z)
-        ff = ff_update_z if update_z else ff_no_update_z
+        output = input[:]
         for layer in self._layers:
-            ff(layer)
-        return current_output
-
-    # def _feedforward(self, input, update_z=False):
-    #     """
-    #     """
-    #     current_output = input[:]
-    #     #print("input: ", current_output)
-    #     def ff_update_z(layer):
-    #         nonlocal current_output
-    #         input_with_bias = np.array([np.concatenate(([BIAS_INPUT], example)) for example in current_output])
-    #         #print("input with bias: ", input_with_bias)
-    #         #print("W: ", layer.W)
-    #         #z = np.dot(input_with_bias, layer.W.T)
-    #         z = np.dot(input_with_bias, layer.W.T)
-    #         #print("z: ", z)
-    #         #print("z: ", z)
-    #         layer.z = z
-    #         current_output = layer.activation(z)
-    #     def ff_no_update_z(layer):
-    #         nonlocal current_output
-    #         input_with_bias = np.array([np.concatenate(([BIAS_INPUT], example)) for example in current_output])
-    #         #print("input with bias: ", input_with_bias)
-    #         #print("W: ", layer.W)
-    #         z = np.dot(input_with_bias, layer.W.T)
-    #         #print("z: ", z)
-    #         current_output = layer.activation(z)
-    #     ff = ff_update_z if update_z else ff_no_update_z
-    #     for layer in self._layers:
-    #         ff(layer)
-    #     return current_output
+            output = output @ layer.W.T + layer.b
+            if update_z:
+                layer.z[:] = output
+            output = layer.activation(output)
+        return output
 
     def _update_W(self):
         """
@@ -122,37 +84,23 @@ class Model:
         for layer in self._layers:
             self._optimizer.step(layer)
 
-    def _backpropagation(self, output, x):
+    def _backpropagation(self,pred_y, y, x):
         """
         """
-        delta_layer = output[:]
-        layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
-        prev_layer = next(layers_reversed)
-        for layer in layers_reversed:
-            prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
-            if (True):
-                #Model._clip_W(prev_layer.der_W)
-                prev_layer.der_W = Model._normalize_der_W(prev_layer.der_W)
-            delta_layer = delta_layer @ prev_layer.W[:, 1:]
+        layers_reversed = list(reversed(self._layers))
+        prev_layer = layers_reversed[0]
+        prev_layer.delta[:] = self._loss_der(pred_y, np.array(y)) * prev_layer.activation_der(prev_layer.z)
+        for layer in layers_reversed[1:]:
+            prev_layer.der_b[:] = prev_layer.delta
+            prev_layer.der_W[:] = prev_layer.delta * layer.activation(layer.z)
+            if (False):
+                # Model._clip_der(prev_layer.der_b)
+                # Model._clip_der(prev_layer.der_W)
+                prev_layer.der_b, prev_layer.der_W = Model._normalize_der_W(prev_layer.der_b, prev_layer.der_W)
+            layer.delta = (prev_layer.W.T @ prev_layer.delta) * layer.activation_der(layer.z)
             prev_layer = layer
-
-    # def _backpropagation(self, output, x, batch_size):
-    #     """
-    #     """
-    #     delta_layer = output[:]
-    #     layers_reversed = chain(reversed(self._layers), iter([Model._FirstModelLayer(x)]))
-    #     prev_layer = next(layers_reversed)
-    #     for layer in layers_reversed:
-    #         #prev_layer.der_W[:] = [delta * layer.activation(np.concatenate(([BIAS_INPUT], layer.z))) for delta in delta_layer]
-    #         prev_layer.der_W_sum = []
-    #         for ex in layer.z:
-    #             prev_layer.der_W_sum.append(np.array([delta * layer.activation(np.concatenate(([BIAS_INPUT], ex))) for delta in delta_layer]))
-    #         prev_layer.der_W = sum(prev_layer.der_W_sum) / batch_size
-    #         if (True):
-    #             #Model._clip_W(prev_layer.der_W)
-    #             prev_layer.der_W = Model._normalize_der_W(prev_layer.der_W)
-    #         delta_layer = delta_layer @ prev_layer.W[:, 1:]
-    #         prev_layer = layer
+        layers_reversed[-1].der_b[:] = prev_layer.delta
+        layers_reversed[-1].der_W[:] = [delta * x for delta in prev_layer.delta]
 
     def compile(self, optimizer=SGD(), loss=None, input_normalization=None):
         """
@@ -178,53 +126,12 @@ class Model:
             Y_shuffled = Y[indices]
             for x, y in zip(X_shuffled, Y_shuffled):
                 x_normed = self._norm_fct(x)
-                output = self._feedforward(x_normed, update_z=True)
-                self._backpropagation(self._loss_der(output, np.array(y)), x_normed)
+                pred_y = self._feedforward(x_normed, update_z=True)
+                self._backpropagation(pred_y, y, x_normed)
                 self._update_W()
-                loss_per_epoch += self._loss(output, np.array(y))
+                loss_per_epoch += self._loss(pred_y, np.array(y))
             print(f"loss in epoch {i+1}: ", loss_per_epoch/nr_examples)
             loss_per_epoch = np.zeros(nr_output_neurons)
-
-    # def fit(self, X, Y, batch_size=32, epochs=1):
-    #     """
-    #     """
-    #     self._norm_fct = self._input_normalization(X)
-    #     nr_examples = len(X)
-    #     nr_output_neurons = len(Y[0])
-    #     X = np.array(X)
-    #     Y = np.array(Y)
-    #     indices = np.arange(nr_examples)
-    #     loss_per_epoch = np.zeros(nr_output_neurons)
-    #     for i in range(epochs):
-    #         np.random.shuffle(indices)
-    #         X_shuffled = X[indices]
-    #         Y_shuffled = Y[indices]
-    #         for X_batch, Y_batch in Model._batch(X_shuffled, Y_shuffled, batch_size):
-    #             X_batch_normed = np.array([self._norm_fct(x) for x in X_batch])
-    #             output = self._feedforward(X_batch_normed, update_z=True)
-    #             #print(f"output {i}", output)
-    #             cost_der = self._loss_der(output, Y_batch)
-    #             cost_mean_der = sum(cost_der) / batch_size
-    #             #cost_mean = sum()
-    #             #print("cost: ", cost_mean)
-    #             self._backpropagation(cost_mean_der, X_batch_normed, batch_size)
-    #             loss_per_epoch += sum(self._loss(output, Y_batch))
-    #             self._update_W()
-    #         print(f"loss in epoch {i+1}: ", loss_per_epoch/nr_examples)
-    #         loss_per_epoch = np.zeros(nr_output_neurons)
-
-
-                #loss_per_epoch += self._loss(output, np.array(y))
-                    #np.add(batch_loss_der, np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y)), out=batch_loss_der)
-                    #batch_loss_der += np.array(self._comp_loss_der_arr(self._feed_forward(x_normed, True), y))
-                # len_mse = len(Y_batch)
-                # #print("batch_size: ", len_mse)
-                # #print("abg_batch:", batch_loss_der)
-                # batch_loss_der /= float(len_mse)
-                # for x, y in zip(X_batch, Y_batch):
-                #     x_normed = self._norm_fct(x)
-                #     self._compute_gradients(batch_loss_der, x_normed)
-                #     self._adjust_W()
 
     def predict(self, input):
         """
@@ -256,6 +163,8 @@ class Model:
         def __init__(self, x):
             self.z = x
             self.activation = map_activations['linear'].activation
+            self.activation_der = map_activations['linear'].activation_der
+            self.delta = np.empty(len(x))
 
     class _ModelLayer:
         def __init__(self, no_inputs: int, nr_neurons: int, activation: str | None, kernel_initializer: Callable | None, name: str | None):
@@ -263,5 +172,9 @@ class Model:
             self.activation_der = Model.get(map_activations, activation,  map_activations['linear']).activation_der
             self.W = Model.get(map_activations, self.activation,  map_activations['linear']).kernel_initializer(no_inputs, nr_neurons) if kernel_initializer is None else kernel_initializer(no_inputs, nr_neurons)
             self.der_W = np.empty(self.W.shape)
+            #self.b = np.random.normal((nr_neurons, 1)) if self.activation == Activation.relu else np.zeros((nr_neurons, 1))
+            self.b =  np.zeros(nr_neurons)
+            self.der_b = np.zeros(nr_neurons)
             self.z = np.empty(nr_neurons)
+            self.delta = np.empty(nr_neurons)
             self.name = name
