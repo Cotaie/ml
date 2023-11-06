@@ -2,15 +2,14 @@ import numpy as np
 from neural.constants import EPSILON
 
 class SGD:
-    def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False, clipvalue=None):
+    def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
         self._learning_rate = learning_rate
         self._momentum = momentum
         self._nesterov = nesterov
         self._velocity_W = {}
         self._velocity_b = {}
-        self._clipvalue = clipvalue
 
-    def step(self, layer):
+    def step(self, layers):
         # # For weights (W)
         # lookahead_W = 0
         # if self._nesterov and layer.name in self._velocity_W:
@@ -34,13 +33,9 @@ class SGD:
 
         # layer.b += lookahead_b  # Reverse the lookahead adjustment (if lookahead_b is 0, this does nothing)
         # layer.b -= self._learning_rate * self._velocity_b[layer.name]
-
-        if self._clipvalue is not None:
-            clipvalue = self._clipvalue
-            np.clip(layer.der_b, a_min=-clipvalue, a_max=clipvalue, out=layer.der_b)
-            np.clip(layer.der_W, a_min=-clipvalue, a_max=clipvalue, out=layer.der_W)
-        layer.b -= self._learning_rate * layer.der_b
-        layer.W -= self._learning_rate * layer.der_W
+        for layer in layers:
+            layer.b -= self._learning_rate * layer.der_b
+            layer.W -= self._learning_rate * layer.der_W
 
 class AdaGrad:
     def __init__(self, learning_rate=0.01, epsilon=EPSILON):

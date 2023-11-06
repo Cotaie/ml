@@ -18,7 +18,6 @@ class Model:
         self._norm_fct = Normalization.no_normalization(None)
         self._reg = 0
         self._reg_fact = 1
-        self._clip_W = False
     @staticmethod
     def get_with_warning(dict: dict, key: str, default: MapActivation | MapLoss , warning: str):
         """
@@ -38,22 +37,6 @@ class Model:
         num_batches = (len(input) + batch_size - 1) // batch_size
         for i in range(num_batches):
             yield (input[i * batch_size:(i + 1) * batch_size], output[i * batch_size:(i + 1) * batch_size])
-    @staticmethod
-    def _clip_der(der, value=1):
-        """
-        """
-        np.clip(der, a_min=-value, a_max=value, out=der)
-    @staticmethod
-    def _normalize_der_W(der_b, der_W, norm_value=1.0):
-        """
-        """
-        der_bW = np.hstack((der_b.reshape(-1,1), der_W))
-        norm = np.linalg.norm(der_bW)
-        #print("norm: ", norm)
-        if norm == 0:
-            return (np.array([sub_lst[0] for sub_lst in der_bW]), np.array([sub_lst[1:] for sub_lst in der_bW]))
-        else:
-            return ((np.array([sub_lst[0] for sub_lst in der_bW]) / norm) * norm_value, (np.array([sub_lst[1:] for sub_lst in der_bW]) / norm) * norm_value)
 
     def _build(self, model_arch: list, seed: int | None):
         """
@@ -72,17 +55,11 @@ class Model:
         """
         output = input[:]
         for layer in self._layers:
-            output = output @ layer.W.T + layer.b
+            z = output @ layer.W.T + layer.b
             if update_z:
-                layer.z[:] = output
-            output = layer.activation(output)
+                layer.z[:] = z
+            output = layer.activation(z)
         return output
-
-    def _update_W(self):
-        """
-        """
-        for layer in self._layers:
-            self._optimizer.step(layer)
 
     def _backpropagation(self,pred_y, y, x):
         """
@@ -92,23 +69,27 @@ class Model:
         prev_layer.delta[:] = self._loss_der(pred_y, np.array(y)) * prev_layer.activation_der(prev_layer.z)
         for layer in layers_reversed[1:]:
             prev_layer.der_b[:] = prev_layer.delta
-            prev_layer.der_W[:] = prev_layer.delta * layer.activation(layer.z)
-            if (False):
-                # Model._clip_der(prev_layer.der_b)
-                # Model._clip_der(prev_layer.der_W)
-                prev_layer.der_b, prev_layer.der_W = Model._normalize_der_W(prev_layer.der_b, prev_layer.der_W)
+            prev_layer.der_W[:] = [delta * layer.activation(layer.z) for delta in prev_layer.delta]
             layer.delta = (prev_layer.W.T @ prev_layer.delta) * layer.activation_der(layer.z)
             prev_layer = layer
         layers_reversed[-1].der_b[:] = prev_layer.delta
         layers_reversed[-1].der_W[:] = [delta * x for delta in prev_layer.delta]
 
-    def compile(self, optimizer=SGD(), loss=None, input_normalization=None):
+    def _clip_der(self):
+        """
+        """
+        for layer in self._layers:
+            np.clip(layer.der_b, a_min=-self._clip_value, a_max=self._clip_value, out=layer.der_b)
+            np.clip(layer.der_W, a_min=-self._clip_value, a_max=self._clip_value, out=layer.der_W)
+
+    def compile(self, optimizer=SGD(), loss=None, input_normalization=None, clip_value=None):
         """
         """
         self._optimizer = optimizer
         self._loss = Model.get_with_warning(map_loss, loss, map_loss['mean_squared_error'], LOSS_NOT_FOUND).loss
         self._loss_der = Model.get(map_loss, loss, map_loss['mean_squared_error']).loss_der
         self._input_normalization = Normalization.no_normalization if input_normalization is None else input_normalization
+        self._clip_value = clip_value
 
     def fit(self, X, Y, batch_size=32, epochs=1):
         """
@@ -128,7 +109,9 @@ class Model:
                 x_normed = self._norm_fct(x)
                 pred_y = self._feedforward(x_normed, update_z=True)
                 self._backpropagation(pred_y, y, x_normed)
-                self._update_W()
+                if self._clip_value is not None:
+                    self._clip_der()
+                self._optimizer.step(self._layers)
                 loss_per_epoch += self._loss(pred_y, np.array(y))
             print(f"loss in epoch {i+1}: ", loss_per_epoch/nr_examples)
             loss_per_epoch = np.zeros(nr_output_neurons)
@@ -172,7 +155,6 @@ class Model:
             self.activation_der = Model.get(map_activations, activation,  map_activations['linear']).activation_der
             self.W = Model.get(map_activations, self.activation,  map_activations['linear']).kernel_initializer(no_inputs, nr_neurons) if kernel_initializer is None else kernel_initializer(no_inputs, nr_neurons)
             self.der_W = np.empty(self.W.shape)
-            #self.b = np.random.normal((nr_neurons, 1)) if self.activation == Activation.relu else np.zeros((nr_neurons, 1))
             self.b =  np.zeros(nr_neurons)
             self.der_b = np.zeros(nr_neurons)
             self.z = np.empty(nr_neurons)
