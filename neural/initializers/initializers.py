@@ -4,28 +4,28 @@ from neural.constants import MEAN, VARIANCE
 
 class Initializers:
     @staticmethod
-    def zeros(input_dim, output_dim):
-        return np.zeros((output_dim, input_dim))
+    def zeros(nr_inputs, nr_neurons):
+        return np.zeros((nr_inputs, nr_neurons))
     @staticmethod
-    def ones(input_dim, output_dim):
-        return np.ones((output_dim, input_dim))
+    def ones(nr_inputs, nr_neurons):
+        return np.ones((nr_inputs, nr_neurons))
     @staticmethod
-    def random_normal(input_dim, output_dim, mean=MEAN, var=VARIANCE, seed=None):
+    def random_normal(nr_inputs, nr_neurons, mean=MEAN, var=VARIANCE, seed=None):
         np.random.seed(seed)
-        return np.random.normal(mean, var, (output_dim, input_dim))
+        return np.random.normal(mean, var, (nr_inputs, nr_neurons))
     @staticmethod
-    def xavier_normal(input_dim, output_dim, seed=None):
+    def xavier_normal(nr_inputs, nr_neurons, seed=None):
         np.random.seed(seed)
-        return np.random.normal(0, 2 / (output_dim + input_dim), (output_dim, input_dim))
+        return np.random.normal(0, 2 / (nr_neurons + nr_inputs), (nr_inputs, nr_neurons))
     @staticmethod
-    def xavier_uniform(input_dim, output_dim, seed=None):
+    def xavier_uniform(nr_inputs, nr_neurons, seed=None):
         np.random.seed(seed)
         mean = 0
-        var = 6 / (input_dim + output_dim)
+        var = 6 / (nr_inputs + nr_neurons)
         low = mean - np.sqrt(3 * np.square(var))
         high = mean + np.sqrt(3 * np.square(var))
-        return np.random.uniform(low, high, (output_dim, input_dim))
+        return np.random.uniform(low, high, (nr_inputs, nr_neurons))
     @staticmethod
-    def he(input_dim, output_dim, seed=None):
+    def he(nr_inputs, nr_neurons, seed=None):
         np.random.seed(seed)
-        return np.random.normal(0, 2 / input_dim, (output_dim, input_dim))
+        return np.random.normal(0, 2 / nr_inputs, (nr_inputs, nr_neurons))

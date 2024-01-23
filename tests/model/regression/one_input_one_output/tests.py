@@ -37,8 +37,8 @@ class TestModel(unittest.TestCase):
         plt.plot(x2, y2, color='green')
 
         mod = Model([1, Layer(1, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
-        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.001, momentum=0.7, nesterov=False))
-        mod.fit(X, Y, batch_size=1, epochs=50)
+        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.001, momentum=0.0, nesterov=False))
+        mod.fit(X, Y, batch_size=100, epochs=30)
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')
 
@@ -72,7 +72,7 @@ class TestModel(unittest.TestCase):
 
         mod = Model([1, Layer(1, activation="relu", kernel_initializer=Initializers.he)])
         mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.01, momentum=0.7, nesterov=False))
-        mod.fit(X, Y, batch_size=2, epochs=50)
+        mod.fit(X, Y, batch_size=1000, epochs=100)
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')
 
@@ -105,7 +105,7 @@ class TestModel(unittest.TestCase):
         mod = Model([1, Layer(2, activation="relu", kernel_initializer=Initializers.he), Layer(2, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
         mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.0001, momentum=0.0, nesterov=False))
 
-        mod.fit(X, Y, batch_size=1, epochs=50)
+        mod.fit(X, Y, batch_size=1, epochs=100)
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')
 
@@ -133,9 +133,9 @@ class TestModel(unittest.TestCase):
         plt.plot(x2, y2, color='green')
         plt.plot(x3, y3, color='green')
 
-        mod = Model([1, Layer(10, activation="relu", kernel_initializer=Initializers.he), Layer(10, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
-        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.0001, momentum=0.9, nesterov=False))
-        mod.fit(X, Y, batch_size=1, epochs=50)
+        mod = Model([1, Layer(5, activation="relu", kernel_initializer=Initializers.he), Layer(5, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
+        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.00001, momentum=0.9, nesterov=False))
+        mod.fit(X, Y, batch_size=100, epochs=100)
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')
 
@@ -166,9 +166,15 @@ class TestModel(unittest.TestCase):
 
         # mod = Model([1, Layer(10, activation="relu", kernel_initializer=Initializers.he), Layer(10, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
         # mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, optimizer=SGDD(learning_rate=0.0001, momentum=0.9, nesterov=False))
-        mod = Model([1, Layer(2, activation="relu", kernel_initializer=Initializers.he), Layer(2, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
-        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.0001, momentum=0.9, nesterov=False))
-        mod.fit(X, Y, batch_size=2, epochs=50)
+        mod = Model([1, Layer(4, activation="relu", kernel_initializer=Initializers.he), Layer(4, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
+        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.00002, momentum=0.9, nesterov=False))
+        for i, layer in enumerate(mod._layers):
+            print(f"layer {i+1} size of W: ", np.shape(layer.W))
+            print(f"layer {i+1} size of der_W: ", np.shape(layer.der_W))
+            print(f"layer {i+1} size of b: ", np.shape(layer.b))
+            print(f"layer {i+1} size of der_b: ", np.shape(layer.der_b))
+        mod.fit(X, Y, batch_size=1, epochs=100)
+
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')
 
@@ -194,7 +200,7 @@ class TestModel(unittest.TestCase):
         plt.plot(x2, y2, color='green')
 
         mod = Model([1, Layer(2, activation="relu", kernel_initializer=Initializers.he), Layer(1, activation="linear", kernel_initializer=Initializers.random_normal)])
-        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.0005, momentum=0.9, nesterov=False))
+        mod.compile(loss='mean_squared_error', input_normalization=Normalization.z_score, clip_value=None, optimizer=SGDD(learning_rate=0.00001, momentum=0.9, nesterov=False))
         mod.fit(X, Y, batch_size=1, epochs=50)
         plt.plot(X, [mod.predict(x) for x in X], color='red', label='estimated function')
         #plt.plot(X, np.squeeze([mod.predict([x]) for x in X]), color='red', label='estimated function')

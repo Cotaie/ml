@@ -31,8 +31,8 @@ class TestModel(unittest.TestCase):
         # X_validation = [list(item) for item in zip(data_validation['x1'].values, data_validation['x2'].values)]
         # Y_validation = [[item] for item in data_validation['y'].values]
 
-        mod = Model([2, Layer(2, activation='sigmoid', kernel_initializer=Initializers.random_normal), Layer(1, activation="sigmoid", kernel_initializer=Initializers.random_normal)])
-        mod.compile(loss='binary_crossentropy', input_normalization=Normalization.z_score, optimizer=SGD(learning_rate=0.001))
+        mod = Model([2, Layer(2, activation='leaky_relu', kernel_initializer=Initializers.he), Layer(1, activation="sigmoid", kernel_initializer=Initializers.he)])
+        mod.compile(loss='binary_crossentropy', input_normalization=Normalization.min_max, optimizer=SGD(learning_rate=0.00005, momentum=0.8))
         mod.fit(X, Y, batch_size=5, epochs=20)
 
         print("W 1: ", mod._layers[0].W)

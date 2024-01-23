@@ -2,10 +2,18 @@ import unittest
 import numpy as np
 from neural.layers import Layer
 from neural.model import Model
+from neural.initializers import Initializers
 from neural.normalizations import Normalization
 
 
 class TestModel(unittest.TestCase):
+    def test_feedforward(self):
+        X = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18]]
+        mlp = Model([3, Layer(3, activation="linear", kernel_initializer=Initializers.ones), Layer(2, activation="linear", kernel_initializer=Initializers.ones)], 42)
+        mlp.compile(loss='mse', input_normalization=None)
+        mlp._feedforward((X[0]), update_z=True)
+        print("layer1 Z: ", mlp._layers[0].z)
+        print("layer2 Z: ", mlp._layers[1].z)
     def test_fit(self):
         mlp = Model([2, Layer(3, activation="linear"), Layer(2, activation="linear")], 42)
         mlp.compile(loss="mse", input_normalization=None)
